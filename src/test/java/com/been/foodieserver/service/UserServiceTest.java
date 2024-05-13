@@ -1,8 +1,10 @@
 package com.been.foodieserver.service;
 
+import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
+import com.been.foodieserver.dto.response.UserInfoResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.repository.UserRepository;
@@ -53,6 +55,7 @@ class UserServiceTest {
                 .loginId(userDto.getLoginId())
                 .password("encodedPwd")
                 .nickname(userDto.getNickname())
+                .role(Role.USER)
                 .build();
     }
 
@@ -184,5 +187,82 @@ class UserServiceTest {
         assertThat(result).isEmpty();
 
         then(userRepository).should().findByLoginId(userDto.getLoginId());
+    }
+
+    @DisplayName("아이디가 존재하면 내 정보 조회 성공")
+    @Test
+    void getMyInformation_ifLoginIdExists() {
+        //Given
+        String loginId = userDto.getLoginId();
+
+        given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+
+        //When
+        UserInfoResponse result = userService.getMyInfo(loginId);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getLoginId()).isEqualTo(loginId);
+        assertThat(result.getNickname()).isEqualTo(user.getNickname());
+        assertThat(result.getRole()).isEqualTo(user.getRole().getRoleName());
+        assertThat(result.getCreatedAt()).isEqualTo(user.getCreatedAt());
+        assertThat(result.getModifiedAt()).isEqualTo(user.getModifiedAt());
+
+        then(userRepository).should().findByLoginId(loginId);
+    }
+
+    @DisplayName("아이디가 존재하지 않으면 내 정보 조회 실패")
+    @Test
+    void failToGetMyInformation_ifLoginIdDoesntExist() {
+        //Given
+        String loginId = userDto.getLoginId();
+
+        given(userRepository.findByLoginId(loginId)).willReturn(Optional.empty());
+
+        //When & Then
+        assertThatThrownBy(() -> userService.getMyInfo(loginId))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
+
+        then(userRepository).should().findByLoginId(loginId);
+    }
+
+    @DisplayName("아이디가 존재하면 다른 유저 정보 조회 성공")
+    @Test
+    void getUserInformation_ifLoginIdExists() {
+        //Given
+        String loginId = userDto.getLoginId();
+
+        given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+
+        //When
+        UserInfoResponse result = userService.getUserInfo(loginId);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getLoginId()).isEqualTo(loginId);
+        assertThat(result.getNickname()).isEqualTo(user.getNickname());
+        assertThat(result.getRole()).isNull();
+        assertThat(result.getCreatedAt()).isNull();
+        assertThat(result.getModifiedAt()).isNull();
+        assertThat(result.getDeletedAt()).isNull();
+
+        then(userRepository).should().findByLoginId(loginId);
+    }
+
+    @DisplayName("아이디가 존재하지 않으면 다른 유저 정보 조회 실패")
+    @Test
+    void failToGetUserInformation_ifLoginIdDoesntExist() {
+        //Given
+        String loginId = userDto.getLoginId();
+
+        given(userRepository.findByLoginId(loginId)).willReturn(Optional.empty());
+
+        //When & Then
+        assertThatThrownBy(() -> userService.getUserInfo(loginId))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
+
+        then(userRepository).should().findByLoginId(loginId);
     }
 }

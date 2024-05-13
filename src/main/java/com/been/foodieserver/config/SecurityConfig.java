@@ -1,5 +1,6 @@
 package com.been.foodieserver.config;
 
+import com.been.foodieserver.config.security.CustomAuthenticationEntryPoint;
 import com.been.foodieserver.config.security.CustomAuthenticationFailureHandler;
 import com.been.foodieserver.config.security.CustomAuthenticationSuccessHandler;
 import com.been.foodieserver.config.security.CustomLogoutSuccessHandler;
@@ -27,7 +28,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, CustomAuthenticationSuccessHandler authenticationSuccessHandler,
-                                                   CustomAuthenticationFailureHandler authenticationFailureHandler, CustomLogoutSuccessHandler logoutSuccessHandler) throws Exception {
+                                                   CustomAuthenticationFailureHandler authenticationFailureHandler, CustomLogoutSuccessHandler logoutSuccessHandler,
+                                                   CustomAuthenticationEntryPoint authenticationEntryPoint) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(form -> form
@@ -43,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers(WHITE_LIST).permitAll()
                         .anyRequest().authenticated())
+                .exceptionHandling(config -> config
+                        .authenticationEntryPoint(authenticationEntryPoint))
                 .build();
     }
 

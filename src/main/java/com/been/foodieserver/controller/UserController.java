@@ -2,11 +2,15 @@ package com.been.foodieserver.controller;
 
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
+import com.been.foodieserver.dto.response.UserInfoResponse;
 import com.been.foodieserver.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,5 +38,15 @@ public class UserController {
     @GetMapping("/nickname/exists")
     public ResponseEntity<ApiResponse<Boolean>> checkNickname(@RequestParam String nickname) {
         return ResponseEntity.ok(ApiResponse.success(userService.isNicknameDuplicated(nickname)));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<UserInfoResponse>> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.success(userService.getMyInfo(userDetails.getUsername())));
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<ApiResponse<UserInfoResponse>> getUserInfo(@PathVariable String userId) {
+        return ResponseEntity.ok(ApiResponse.success(userService.getUserInfo(userId)));
     }
 }
