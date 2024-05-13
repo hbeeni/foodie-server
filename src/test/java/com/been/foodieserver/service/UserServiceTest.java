@@ -1,6 +1,7 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.User;
+import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
@@ -14,11 +15,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -149,5 +153,36 @@ class UserServiceTest {
 
         //Then
         assertThat(result).isFalse();
+    }
+
+    @DisplayName("아이디가 존재하면 유저 검색 성공")
+    @Test
+    void searchUser_ifLoginIdExists() {
+        //Given
+        given(userRepository.findByLoginId(userDto.getLoginId())).willReturn(Optional.of(user));
+
+        //When
+        Optional<CustomUserDetails> result = userService.searchUser(userDto.getLoginId());
+
+        //Then
+        assertThat(result).isNotEmpty();
+        assertThat(result.get().getUsername()).isEqualTo(userDto.getLoginId());
+
+        then(userRepository).should().findByLoginId(userDto.getLoginId());
+    }
+
+    @DisplayName("아이디가 존재하지 않으면 유저 검색 실패")
+    @Test
+    void failToSearchUser_ifLoginIdDoesntExist() {
+        //Given
+        given(userRepository.findByLoginId(userDto.getLoginId())).willReturn(Optional.empty());
+
+        //When
+        Optional<CustomUserDetails> result = userService.searchUser(userDto.getLoginId());
+
+        //Then
+        assertThat(result).isEmpty();
+
+        then(userRepository).should().findByLoginId(userDto.getLoginId());
     }
 }

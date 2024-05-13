@@ -1,5 +1,6 @@
 package com.been.foodieserver.service;
 
+import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
@@ -8,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Transactional
@@ -43,5 +46,9 @@ public class UserService {
 
     private boolean checkPasswordMatch(UserDto userDto) {
         return userDto.getPassword().equals(userDto.getConfirmPassword());
+    }
+
+    public Optional<CustomUserDetails> searchUser(String loginId) {
+        return userRepository.findByLoginId(loginId).map(CustomUserDetails::from);
     }
 }

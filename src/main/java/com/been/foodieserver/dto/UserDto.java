@@ -1,5 +1,6 @@
 package com.been.foodieserver.dto;
 
+import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -30,6 +31,7 @@ public class UserDto {
                 .loginId(loginId)
                 .password(encodedPassword)
                 .nickname(nickname)
+                .role(Role.USER)
                 .build();
     }
 }

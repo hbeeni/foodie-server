@@ -2,6 +2,8 @@ package com.been.foodieserver.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,14 +37,19 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, unique = true, length = 20)
     private String nickname;
 
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(20) not null")
+    private Role role;
+
     protected User() {
     }
 
     @Builder
-    private User(String loginId, String password, String nickname) {
+    private User(String loginId, String password, String nickname, Role role) {
         this.loginId = loginId;
         this.password = password;
         this.nickname = nickname;
+        this.role = role;
     }
 
     @Override
