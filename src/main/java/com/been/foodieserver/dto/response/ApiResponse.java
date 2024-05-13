@@ -48,6 +48,11 @@ public class ApiResponse<T> {
             return new ApiResponse<>(STATUS_FAIL, "request parameter errors", errorMap);
         }
 
+        if (ex.getCause() != null) {
+            Throwable cause = ex.getCause();
+            return new ApiResponse<>(STATUS_FAIL, cause.getMessage(), null);
+        }
+
         return new ApiResponse<>(STATUS_FAIL, ex.getMessage(), null);
     }
 
