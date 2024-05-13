@@ -240,8 +240,8 @@ class UserServiceTest {
 
         //Then
         assertThat(result).isNotNull();
+        assertThat(result.getLoginId()).isEqualTo(loginId);
         assertThat(result.getNickname()).isEqualTo(user.getNickname());
-        assertThat(result.getLoginId()).isNull();
         assertThat(result.getRole()).isNull();
         assertThat(result.getCreatedAt()).isNull();
         assertThat(result.getModifiedAt()).isNull();

@@ -33,7 +33,7 @@ public class UserInfoResponse {
 
     public static UserInfoResponse others(User user) {
         return new UserInfoResponse(user.getId(),
-                null,
+                user.getLoginId(),
                 user.getNickname(),
                 null,
                 null,
