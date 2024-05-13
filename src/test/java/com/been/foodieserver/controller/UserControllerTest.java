@@ -6,6 +6,7 @@ import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
+import com.been.foodieserver.dto.response.UserInfoResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.service.UserService;
@@ -20,6 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
@@ -31,6 +33,8 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -54,16 +58,19 @@ class UserControllerTest {
     @Value("${api.endpoint.base-url}")
     private String baseUrl;
 
+    private String userApi;
     private String signUpApi;
     private String loginApi;
     private String logoutApi;
+    private String myInfoApi;
 
     @BeforeEach
     void setUp() {
-        String requestMapping = baseUrl + "/users";
-        signUpApi = requestMapping + "/sign-up";
-        loginApi = requestMapping + "/login";
-        logoutApi = requestMapping + "/logout";
+        userApi = baseUrl + "/users";
+        signUpApi = userApi + "/sign-up";
+        loginApi = userApi + "/login";
+        logoutApi = userApi + "/logout";
+        myInfoApi = userApi + "/my";
     }
 
     @DisplayName("요청이 유효하면 회원가입 성공")
@@ -187,5 +194,96 @@ class UserControllerTest {
         mockMvc.perform(post(logoutApi).with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS));
+    }
+
+    @DisplayName("로그인이 되어 있으면 내 정보 조회 성공")
+    @Test
+    void getMyInfo_IfLoggedIn() throws Exception {
+        //Given
+        String loginId = "user1";
+        User user = User.builder()
+                .loginId(loginId)
+                .nickname("nickname")
+                .role(Role.USER)
+                .build();
+        UserInfoResponse userInfoResponse = UserInfoResponse.my(user);
+
+        given(userService.getMyInfo(loginId)).willReturn(userInfoResponse);
+
+        //When & Then
+        mockMvc.perform(get(myInfoApi)
+                        .with(user(loginId).roles(Role.USER.getRoleName()))
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").exists())
+                .andExpect(jsonPath("$.data.loginId").value(loginId));
+
+        then(userService).should().getMyInfo(loginId);
+    }
+
+    @DisplayName("로그인이 되어 있지 않으면 내 정보 조회 실패")
+    @Test
+    void failToGetMyInfo_IfNotLoggedIn() throws Exception {
+        //Given
+
+        //When & Then
+        mockMvc.perform(get(myInfoApi)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8"))
+                .andExpect(status().is(ErrorCode.AUTH_FAIL.getStatus().value()))
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_FAIL))
+                .andExpect(jsonPath("$.message").value(ErrorCode.AUTH_FAIL.getMessage()));
+
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @WithMockUser
+    @DisplayName("유저 아이디가 존재하면 유저 정보 조회 성공")
+    @Test
+    void getUserInfo_IfUserLoginIdExists() throws Exception {
+        //Given
+        String loginId = "others";
+        String nickname = "nickname";
+
+        User user = User.builder()
+                .loginId(loginId)
+                .nickname(nickname)
+                .role(Role.USER)
+                .build();
+        UserInfoResponse userInfoResponse = UserInfoResponse.others(user);
+
+        given(userService.getUserInfo(loginId)).willReturn(userInfoResponse);
+
+        //When & Then
+        mockMvc.perform(get(userApi + "/" + user.getLoginId())
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").exists())
+                .andExpect(jsonPath("$.data.loginId").doesNotExist())
+                .andExpect(jsonPath("$.data.nickname").value(nickname));
+
+        then(userService).should().getUserInfo(loginId);
+    }
+
+    @WithMockUser
+    @DisplayName("유저 아이디가 존재하지 않으면 유저 정보 조회 실패")
+    @Test
+    void failToGetUserInfo_IfUserLoginIdDoesntExist() throws Exception {
+        //Given
+        String loginId = "someid";
+
+        given(userService.getUserInfo(loginId)).willThrow(new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        //When & Then
+        mockMvc.perform(get(userApi + "/" + loginId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().is(ErrorCode.USER_NOT_FOUND.getStatus().value()))
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_FAIL))
+                .andExpect(jsonPath("$.message").value(ErrorCode.USER_NOT_FOUND.getMessage()));
+
+        then(userService).should().getUserInfo(loginId);
     }
 }

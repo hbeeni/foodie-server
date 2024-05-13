@@ -1,7 +1,9 @@
 package com.been.foodieserver.service;
 
+import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
+import com.been.foodieserver.dto.response.UserInfoResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.repository.UserRepository;
@@ -50,5 +52,18 @@ public class UserService {
 
     public Optional<CustomUserDetails> searchUser(String loginId) {
         return userRepository.findByLoginId(loginId).map(CustomUserDetails::from);
+    }
+
+    public UserInfoResponse getMyInfo(String loginId) {
+        return UserInfoResponse.my(getUserEntityOrException(loginId));
+    }
+
+    public UserInfoResponse getUserInfo(String loginId) {
+        return UserInfoResponse.others(getUserEntityOrException(loginId));
+    }
+
+    private User getUserEntityOrException(String loginId) {
+        return userRepository.findByLoginId(loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }
