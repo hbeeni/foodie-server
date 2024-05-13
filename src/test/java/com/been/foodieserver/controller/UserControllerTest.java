@@ -218,6 +218,9 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
                 .andExpect(jsonPath("$.data").exists())
+                .andExpect(jsonPath("$.data.loginId").value(user.getLoginId()))
+                .andExpect(jsonPath("$.data.nickname").value(user.getNickname()))
+                .andExpect(jsonPath("$.data.role").value(user.getRole().getRoleName()))
                 .andExpect(jsonPath("$.data.loginId").value(loginId));
 
         then(userService).should().getMyInfo(loginId);
@@ -245,11 +248,10 @@ class UserControllerTest {
     void getUserInfo_IfUserLoginIdExists() throws Exception {
         //Given
         String loginId = "others";
-        String nickname = "nickname";
 
         User user = User.builder()
                 .loginId(loginId)
-                .nickname(nickname)
+                .nickname("nickname")
                 .role(Role.USER)
                 .build();
         UserInfoResponse userInfoResponse = UserInfoResponse.others(user);
@@ -262,8 +264,12 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
                 .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.loginId").doesNotExist())
-                .andExpect(jsonPath("$.data.nickname").value(nickname));
+                .andExpect(jsonPath("$.data.loginId").value(user.getLoginId()))
+                .andExpect(jsonPath("$.data.nickname").value(user.getNickname()))
+                .andExpect(jsonPath("$.data.role").doesNotExist())
+                .andExpect(jsonPath("$.data.createdAt").doesNotExist())
+                .andExpect(jsonPath("$.data.modifiedAt").doesNotExist())
+                .andExpect(jsonPath("$.data.deletedAt").doesNotExist());
 
         then(userService).should().getUserInfo(loginId);
     }
