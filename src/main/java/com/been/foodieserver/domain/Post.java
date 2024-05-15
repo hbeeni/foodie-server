@@ -8,7 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -42,11 +41,14 @@ public class Post extends BaseTimeEntity {
     protected Post() {
     }
 
-    @Builder
     private Post(User user, String title, String content) {
         this.user = user;
         this.title = title;
         this.content = content;
+    }
+
+    public static Post of(User user, String title, String content) {
+        return new Post(user, title, content);
     }
 
     @Override

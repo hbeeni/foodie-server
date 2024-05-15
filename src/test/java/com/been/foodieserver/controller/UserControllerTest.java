@@ -4,6 +4,8 @@ import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
+import com.been.foodieserver.dto.request.UserInfoModifyRequest;
+import com.been.foodieserver.dto.request.UserPasswordChangeRequest;
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.dto.response.UserInfoResponse;
@@ -27,6 +29,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
@@ -36,6 +39,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -63,6 +67,7 @@ class UserControllerTest {
     private String loginApi;
     private String logoutApi;
     private String myInfoApi;
+    private String passwordApi;
 
     @BeforeEach
     void setUp() {
@@ -71,6 +76,7 @@ class UserControllerTest {
         loginApi = userApi + "/login";
         logoutApi = userApi + "/logout";
         myInfoApi = userApi + "/my";
+        passwordApi = userApi + "/my/password";
     }
 
     @DisplayName("요청이 유효하면 회원가입 성공")
@@ -142,11 +148,7 @@ class UserControllerTest {
         String loginId = "loginid";
         String password = "password12";
 
-        User user = User.builder()
-                .loginId(loginId)
-                .password(encoder.encode(password))
-                .role(Role.USER)
-                .build();
+        User user = User.of(loginId, encoder.encode(password), null, Role.USER);
         CustomUserDetails customUserDetails = CustomUserDetails.from(user);
 
         given(userService.searchUser(loginId)).willReturn(Optional.of(customUserDetails));
@@ -201,11 +203,8 @@ class UserControllerTest {
     void getMyInfo_IfLoggedIn() throws Exception {
         //Given
         String loginId = "user1";
-        User user = User.builder()
-                .loginId(loginId)
-                .nickname("nickname")
-                .role(Role.USER)
-                .build();
+        User user = User.of(loginId, null, "nickname", Role.USER);
+
         UserInfoResponse userInfoResponse = UserInfoResponse.my(user);
 
         given(userService.getMyInfo(loginId)).willReturn(userInfoResponse);
@@ -248,12 +247,8 @@ class UserControllerTest {
     void getUserInfo_IfUserLoginIdExists() throws Exception {
         //Given
         String loginId = "others";
+        User user = User.of(loginId, null, "nickname", Role.USER);
 
-        User user = User.builder()
-                .loginId(loginId)
-                .nickname("nickname")
-                .role(Role.USER)
-                .build();
         UserInfoResponse userInfoResponse = UserInfoResponse.others(user);
 
         given(userService.getUserInfo(loginId)).willReturn(userInfoResponse);
@@ -291,5 +286,62 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value(ErrorCode.USER_NOT_FOUND.getMessage()));
 
         then(userService).should().getUserInfo(loginId);
+    }
+
+    @WithMockUser
+    @DisplayName("수정할 정보 요청이 유효하면 정보 수정 성공")
+    @Test
+    void modifyMyInfo_IfRequestIsValid() throws Exception {
+        //Given
+        String loginId = "user";
+        String nickname = "nickname";
+
+        UserInfoModifyRequest request = new UserInfoModifyRequest(nickname);
+        User user = User.of(loginId, null, nickname, Role.USER);
+        UserInfoResponse response = UserInfoResponse.my(user);
+
+        given(userService.modifyMyInfo(eq(loginId), any(UserDto.class))).willReturn(response);
+
+        //When & Then
+        mockMvc.perform(put(myInfoApi)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").exists())
+                .andExpect(jsonPath("$.data.loginId").value(user.getLoginId()))
+                .andExpect(jsonPath("$.data.nickname").value(user.getNickname()))
+                .andExpect(jsonPath("$.data.role").value(user.getRole().getRoleName()))
+                .andExpect(jsonPath("$.data.loginId").value(loginId));
+
+        then(userService).should().modifyMyInfo(eq(loginId), any(UserDto.class));
+    }
+
+    @WithMockUser
+    @DisplayName("비밀번호  요청이 유효하면 비밀번호 변경 성공")
+    @Test
+    void changePassword_IfRequestIsValid() throws Exception {
+        //Given
+        String loginId = "user";
+        String currentPassword = "current123";
+        String newPassword = "newpasswd123";
+
+        UserPasswordChangeRequest request = new UserPasswordChangeRequest(currentPassword, newPassword, newPassword);
+
+        willDoNothing().given(userService).changePassword(loginId, currentPassword, newPassword, newPassword);
+
+        //When & Then
+        mockMvc.perform(put(passwordApi)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        then(userService).should().changePassword(loginId, currentPassword, newPassword, newPassword);
     }
 }

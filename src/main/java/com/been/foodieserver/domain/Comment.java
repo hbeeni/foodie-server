@@ -8,7 +8,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -43,11 +42,14 @@ public class Comment extends BaseTimeEntity {
     protected Comment() {
     }
 
-    @Builder
     private Comment(Post post, User user, String content) {
         this.post = post;
         this.user = user;
         this.content = content;
+    }
+
+    public static Comment of(Post post, User user, String content) {
+        return new Comment(post, user, content);
     }
 
     @Override

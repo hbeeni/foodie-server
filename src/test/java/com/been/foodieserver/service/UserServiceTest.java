@@ -45,18 +45,13 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        userDto = UserDto.of(
-                "user",
-                "pwd",
-                "pwd",
-                "user"
-        );
-        user = User.builder()
-                .loginId(userDto.getLoginId())
-                .password("encodedPwd")
-                .nickname(userDto.getNickname())
-                .role(Role.USER)
+        userDto = UserDto.builder()
+                .loginId("user1")
+                .password("password12")
+                .confirmPassword("password12")
+                .nickname("user1")
                 .build();
+        user = User.of(userDto.getLoginId(), "encodedPwd", userDto.getNickname(), Role.USER);
     }
 
     @DisplayName("회원 정보가 유효하면 회원가입 성공")
@@ -110,12 +105,12 @@ class UserServiceTest {
     @Test
     void FailToSignUp_IfPasswordAndPasswordConfirmationDontMatch() {
         //Given
-        UserDto userDto = UserDto.of(
-                user.getLoginId(),
-                user.getPassword(),
-                "confirmPwd",
-                user.getNickname()
-        );
+        UserDto userDto = UserDto.builder()
+                .loginId(user.getLoginId())
+                .password(user.getPassword())
+                .confirmPassword("confirmPwd")
+                .nickname(user.getNickname())
+                .build();
 
         given(userRepository.existsByLoginId(userDto.getLoginId())).willReturn(false);
         given(userRepository.existsByNickname(userDto.getNickname())).willReturn(false);
@@ -123,7 +118,7 @@ class UserServiceTest {
         //When & Then
         assertThatThrownBy(() -> userService.signUp(userDto))
                 .isInstanceOf(CustomException.class)
-                .hasMessage(ErrorCode.CHECK_PASSWORD.getMessage());
+                .hasMessage(ErrorCode.PASSWORD_CONFIRM_MISMATCH.getMessage());
         verify(userRepository).existsByLoginId(userDto.getLoginId());
         verify(userRepository).existsByNickname(userDto.getNickname());
     }
@@ -264,5 +259,112 @@ class UserServiceTest {
                 .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
 
         then(userRepository).should().findByLoginId(loginId);
+    }
+
+    @DisplayName("닉네임 수정 시 다른 유저의 닉네임과 중복되지 않으면 변경함")
+    @Test
+    void modifyNickname_IfNicknameIsNotDuplicated() {
+        //Given
+        String loginId = user.getLoginId();
+        UserDto userDto = UserDto.builder()
+                .nickname("modified")
+                .build();
+
+        given(userRepository.existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId)).willReturn(false);
+        given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+
+        //When
+        UserInfoResponse result = userService.modifyMyInfo(loginId, userDto);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getNickname()).isEqualTo(userDto.getNickname());
+
+        then(userRepository).should().existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId);
+        then(userRepository).should().findByLoginId(loginId);
+    }
+
+    @DisplayName("닉네임 수정 시 다른 유저의 닉네임과 중복되면 예외 발생")
+    @Test
+    void throwException_IfNicknameIsDuplicated() {
+        //Given
+        String loginId = user.getLoginId();
+        UserDto userDto = UserDto.builder()
+                .nickname("modified")
+                .build();
+
+        given(userRepository.existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId)).willReturn(true);
+
+        //When & Then
+        assertThatThrownBy(() -> userService.modifyMyInfo(loginId, userDto))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.DUPLICATE_NICKNAME.getMessage());
+
+        then(userRepository).should().existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId);
+        then(userRepository).shouldHaveNoMoreInteractions();
+    }
+
+    @DisplayName("비밀번호 변경 시 요청이 유효하면 비밀번호 변경")
+    @Test
+    void changePassword_IfRequestIsValid() {
+        //Given
+        String userPassword = "current12";
+        String currentPassword = "current12";
+        String newPassword = "newpwd12";
+        String encodedPassword = "encodedpwd12";
+        User user = User.of("user1", userPassword, "nickname", Role.USER);
+
+        given(userRepository.findByLoginId(user.getLoginId())).willReturn(Optional.of(user));
+        given(encoder.matches(currentPassword, userPassword)).willReturn(true);
+        given(encoder.encode(newPassword)).willReturn(encodedPassword);
+
+        //When
+        userService.changePassword(user.getLoginId(), currentPassword, newPassword, newPassword);
+
+        //Then
+        assertThat(user).hasFieldOrPropertyWithValue("password", encodedPassword);
+
+        then(userRepository).should().findByLoginId(user.getLoginId());
+        then(encoder).should().matches(currentPassword, userPassword);
+        then(encoder).should().encode(newPassword);
+    }
+
+    @DisplayName("비밀번호 변경 시 새로운 비밀번호와 새로운 비밀번호 확인이 다르면 예외 발생")
+    @Test
+    void throwException_IfNewPasswordAndConfirmNewPasswordAreDifferent() {
+        //Given
+        String currentPassword = "current12";
+        String newPassword = "newpwd12";
+        String confirmNewPassword = "confirmpwd12";
+
+        //When & Then
+        assertThatThrownBy(() -> userService.changePassword("user1", currentPassword, newPassword, confirmNewPassword))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.PASSWORD_CONFIRM_MISMATCH.getMessage());
+
+        then(userRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("비밀번호 변경 시 현재 비밀번호가 틀리면 예외 발생")
+    @Test
+    void throwException_IfCurrentPasswordIsIncorrect() {
+        //Given
+        String loginId = "user1";
+        String currentPassword = "different12";
+        String newPassword = "newpwd12";
+        User user = User.of(loginId, "current12", "nickname", Role.USER);
+
+        given(userRepository.findByLoginId(user.getLoginId())).willReturn(Optional.of(user));
+        given(encoder.matches(currentPassword, user.getPassword())).willReturn(false);
+
+        //When & Then
+        assertThatThrownBy(() -> userService.changePassword(loginId, currentPassword, newPassword, newPassword))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.INVALID_PASSWORD.getMessage());
+
+        assertThat(user).hasFieldOrPropertyWithValue("password", user.getPassword());
+
+        then(userRepository).should().findByLoginId(user.getLoginId());
+        then(encoder).should().matches(currentPassword, user.getPassword());
     }
 }

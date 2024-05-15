@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 import org.hibernate.annotations.SQLDelete;
@@ -44,12 +43,23 @@ public class User extends BaseTimeEntity {
     protected User() {
     }
 
-    @Builder
     private User(String loginId, String password, String nickname, Role role) {
         this.loginId = loginId;
         this.password = password;
         this.nickname = nickname;
         this.role = role;
+    }
+
+    public static User of(String loginId, String password, String nickname, Role role) {
+        return new User(loginId, password, nickname, role);
+    }
+
+    public void modifyInfo(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void changePassword(String newPassword) {
+        this.password = newPassword;
     }
 
     @Override

@@ -7,31 +7,43 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import static com.been.foodieserver.dto.request.UserRequestValidation.LOGIN_ID_MESSAGE;
+import static com.been.foodieserver.dto.request.UserRequestValidation.LOGIN_ID_PATTERN;
+import static com.been.foodieserver.dto.request.UserRequestValidation.NICKNAME_MESSAGE;
+import static com.been.foodieserver.dto.request.UserRequestValidation.NICKNAME_PATTERN;
+import static com.been.foodieserver.dto.request.UserRequestValidation.PASSWORD_MESSAGE;
+import static com.been.foodieserver.dto.request.UserRequestValidation.PASSWORD_PATTERN;
+
 @Getter
 @AllArgsConstructor
 public class UserSignUpRequest {
 
-    @Pattern(regexp = "^(?=.*[a-z])[a-z0-9]{5,20}$", message = "아이디는 5 ~ 20자 사이여야 합니다. 영문 소문자는 필수, 숫자는 옵션입니다.")
+    @Pattern(regexp = LOGIN_ID_PATTERN, message = LOGIN_ID_MESSAGE)
     @Size(min = 5, max = 20)
     @NotBlank
-    private String loginId; //영문 소문자 필수 / 숫자 옵션 / 공백 불가 / 5 ~ 20자
+    private String loginId;
 
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*\\d)(?=.*[A-Z]?)[a-zA-Z0-9]{8,20}$", message = "비밀번호는 8 ~ 20자 사이여야 합니다. 영문 소문자, 숫자를 포함해야 하며, 영문 대문자는 옵션입니다.")
+    @Pattern(regexp = PASSWORD_PATTERN, message = PASSWORD_MESSAGE)
     @Size(min = 8, max = 20)
     @NotBlank
-    private String password; //영문 소문자, 숫자 포함 필수 / 영문 대문자 옵션 / 공백 불가 / 8 ~ 20자
+    private String password;
 
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*\\d)(?=.*[A-Z]?)[a-zA-Z0-9]{8,20}$", message = "비밀번호는 8 ~ 20자 사이여야 합니다. 영문 소문자, 숫자를 포함해야 하며, 영문 대문자는 옵션입니다.")
+    @Pattern(regexp = PASSWORD_PATTERN, message = PASSWORD_MESSAGE)
     @Size(min = 8, max = 20)
     @NotBlank
     private String confirmPassword;
 
-    @Pattern(regexp = "^[a-z0-9]{2,20}$", message = "닉네임은 2 ~ 20자의 영문 소문자, 숫자만 사용 가능합니다.")
+    @Pattern(regexp = NICKNAME_PATTERN, message = NICKNAME_MESSAGE)
     @Size(min = 2, max = 20)
     @NotBlank
-    private String nickname; //영문 소문자, 숫자만 가능 / 공백 불가 / 2 ~ 20자
+    private String nickname;
 
     public UserDto toDto() {
-        return UserDto.of(loginId, password, confirmPassword, nickname);
+        return UserDto.builder()
+                .loginId(loginId)
+                .password(password)
+                .confirmPassword(confirmPassword)
+                .nickname(nickname)
+                .build();
     }
 }
