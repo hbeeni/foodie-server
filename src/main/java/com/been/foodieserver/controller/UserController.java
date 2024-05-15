@@ -1,5 +1,6 @@
 package com.been.foodieserver.controller;
 
+import com.been.foodieserver.dto.request.UserModifyRequest;
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.dto.response.UserInfoResponse;
@@ -12,6 +13,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -48,5 +50,10 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<ApiResponse<UserInfoResponse>> getUserInfo(@PathVariable String userId) {
         return ResponseEntity.ok(ApiResponse.success(userService.getUserInfo(userId)));
+    }
+
+    @PutMapping("/my")
+    public ResponseEntity<ApiResponse<UserInfoResponse>> modifyMyInfo(@AuthenticationPrincipal UserDetails userDetails, @RequestBody @Valid UserModifyRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(userService.modifyMyInfo(userDetails.getUsername(), request.toDto())));
     }
 }

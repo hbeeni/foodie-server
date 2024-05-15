@@ -54,6 +54,10 @@ public class User extends BaseTimeEntity {
         return new User(loginId, password, nickname, role);
     }
 
+    public void modifyInfo(String nickname) {
+        this.nickname = nickname;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

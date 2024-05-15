@@ -260,4 +260,47 @@ class UserServiceTest {
 
         then(userRepository).should().findByLoginId(loginId);
     }
+
+    @DisplayName("닉네임 수정 시 다른 유저의 닉네임과 중복되지 않으면 변경함")
+    @Test
+    void modifyNickname_IfNicknameIsNotDuplicated() {
+        //Given
+        String loginId = user.getLoginId();
+        UserDto userDto = UserDto.builder()
+                .nickname("modified")
+                .build();
+
+        given(userRepository.existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId)).willReturn(false);
+        given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+
+        //When
+        UserInfoResponse result = userService.modifyMyInfo(loginId, userDto);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getNickname()).isEqualTo(userDto.getNickname());
+
+        then(userRepository).should().existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId);
+        then(userRepository).should().findByLoginId(loginId);
+    }
+
+    @DisplayName("닉네임 수정 시 다른 유저의 닉네임과 중복되면 예외 발생")
+    @Test
+    void throwException_IfNicknameIsDuplicated() {
+        //Given
+        String loginId = user.getLoginId();
+        UserDto userDto = UserDto.builder()
+                .nickname("modified")
+                .build();
+
+        given(userRepository.existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId)).willReturn(true);
+
+        //When & Then
+        assertThatThrownBy(() -> userService.modifyMyInfo(loginId, userDto))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.DUPLICATE_NICKNAME.getMessage());
+
+        then(userRepository).should().existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId);
+        then(userRepository).shouldHaveNoMoreInteractions();
+    }
 }

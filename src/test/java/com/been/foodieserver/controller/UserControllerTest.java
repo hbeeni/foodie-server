@@ -4,6 +4,7 @@ import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
+import com.been.foodieserver.dto.request.UserModifyRequest;
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.dto.response.UserInfoResponse;
@@ -27,6 +28,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
@@ -36,6 +38,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -280,5 +283,36 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.message").value(ErrorCode.USER_NOT_FOUND.getMessage()));
 
         then(userService).should().getUserInfo(loginId);
+    }
+
+    @WithMockUser
+    @DisplayName("수정할 정보 요청이 유효하면 정보 수정 성공")
+    @Test
+    void modifyMyInfo_IfRequestIsValid() throws Exception {
+        //Given
+        String loginId = "user";
+        String nickname = "nickname";
+
+        UserModifyRequest request = new UserModifyRequest(nickname);
+        User user = User.of(loginId, null, nickname, Role.USER);
+        UserInfoResponse response = UserInfoResponse.my(user);
+
+        given(userService.modifyMyInfo(eq(loginId), any(UserDto.class))).willReturn(response);
+
+        //When & Then
+        mockMvc.perform(put(myInfoApi)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").exists())
+                .andExpect(jsonPath("$.data.loginId").value(user.getLoginId()))
+                .andExpect(jsonPath("$.data.nickname").value(user.getNickname()))
+                .andExpect(jsonPath("$.data.role").value(user.getRole().getRoleName()))
+                .andExpect(jsonPath("$.data.loginId").value(loginId));
+
+        then(userService).should().modifyMyInfo(eq(loginId), any(UserDto.class));
     }
 }

@@ -62,6 +62,17 @@ public class UserService {
         return UserInfoResponse.others(getUserEntityOrException(loginId));
     }
 
+    public UserInfoResponse modifyMyInfo(String loginId, UserDto userDto) {
+        if (userRepository.existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId)) {
+            throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
+        }
+
+        User user = getUserEntityOrException(loginId);
+        user.modifyInfo(userDto.getNickname());
+
+        return UserInfoResponse.my(user);
+    }
+
     private User getUserEntityOrException(String loginId) {
         return userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
