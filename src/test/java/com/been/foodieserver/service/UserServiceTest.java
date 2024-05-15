@@ -45,18 +45,13 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        userDto = UserDto.of(
-                "user",
-                "pwd",
-                "pwd",
-                "user"
-        );
-        user = User.builder()
-                .loginId(userDto.getLoginId())
-                .password("encodedPwd")
-                .nickname(userDto.getNickname())
-                .role(Role.USER)
+        userDto = UserDto.builder()
+                .loginId("user1")
+                .password("password12")
+                .confirmPassword("password12")
+                .nickname("user1")
                 .build();
+        user = User.of(userDto.getLoginId(), "encodedPwd", userDto.getNickname(), Role.USER);
     }
 
     @DisplayName("회원 정보가 유효하면 회원가입 성공")
@@ -110,12 +105,12 @@ class UserServiceTest {
     @Test
     void FailToSignUp_IfPasswordAndPasswordConfirmationDontMatch() {
         //Given
-        UserDto userDto = UserDto.of(
-                user.getLoginId(),
-                user.getPassword(),
-                "confirmPwd",
-                user.getNickname()
-        );
+        UserDto userDto = UserDto.builder()
+                .loginId(user.getLoginId())
+                .password(user.getPassword())
+                .confirmPassword("confirmPwd")
+                .nickname(user.getNickname())
+                .build();
 
         given(userRepository.existsByLoginId(userDto.getLoginId())).willReturn(false);
         given(userRepository.existsByNickname(userDto.getNickname())).willReturn(false);

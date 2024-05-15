@@ -142,11 +142,7 @@ class UserControllerTest {
         String loginId = "loginid";
         String password = "password12";
 
-        User user = User.builder()
-                .loginId(loginId)
-                .password(encoder.encode(password))
-                .role(Role.USER)
-                .build();
+        User user = User.of(loginId, encoder.encode(password), null, Role.USER);
         CustomUserDetails customUserDetails = CustomUserDetails.from(user);
 
         given(userService.searchUser(loginId)).willReturn(Optional.of(customUserDetails));
@@ -201,11 +197,8 @@ class UserControllerTest {
     void getMyInfo_IfLoggedIn() throws Exception {
         //Given
         String loginId = "user1";
-        User user = User.builder()
-                .loginId(loginId)
-                .nickname("nickname")
-                .role(Role.USER)
-                .build();
+        User user = User.of(loginId, null, "nickname", Role.USER);
+
         UserInfoResponse userInfoResponse = UserInfoResponse.my(user);
 
         given(userService.getMyInfo(loginId)).willReturn(userInfoResponse);
@@ -248,12 +241,8 @@ class UserControllerTest {
     void getUserInfo_IfUserLoginIdExists() throws Exception {
         //Given
         String loginId = "others";
+        User user = User.of(loginId, null, "nickname", Role.USER);
 
-        User user = User.builder()
-                .loginId(loginId)
-                .nickname("nickname")
-                .role(Role.USER)
-                .build();
         UserInfoResponse userInfoResponse = UserInfoResponse.others(user);
 
         given(userService.getUserInfo(loginId)).willReturn(userInfoResponse);

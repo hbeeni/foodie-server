@@ -7,7 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -35,10 +34,13 @@ public class Follow extends BaseCreatedAtEntity {
     protected Follow() {
     }
 
-    @Builder
     private Follow(User user, User target) {
         this.user = user;
         this.target = target;
+    }
+
+    public static Follow of(User user, User target) {
+        return new Follow(user, target);
     }
 
     @Override

@@ -2,36 +2,30 @@ package com.been.foodieserver.dto;
 
 import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 
 @ToString
 @Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserDto {
 
-    private Long id;
-    private String loginId;
-    private String password;
-    private String confirmPassword;
-    private String nickname;
+    private final Long id;
+    private final String loginId;
+    private final String password;
+    private final String confirmPassword;
+    private final String nickname;
 
-    public static UserDto of(String loginId, String password, String confirmPassword, String nickname) {
-        return UserDto.of(null, loginId, password, confirmPassword, nickname);
-    }
-
-    public static UserDto of(Long id, String loginId, String password, String confirmPassword, String nickname) {
-        return new UserDto(id, loginId, password, confirmPassword, nickname);
+    @Builder
+    private UserDto(Long id, String loginId, String password, String confirmPassword, String nickname) {
+        this.id = id;
+        this.loginId = loginId;
+        this.password = password;
+        this.confirmPassword = confirmPassword;
+        this.nickname = nickname;
     }
 
     public User toEntity(String encodedPassword) {
-        return User.builder()
-                .loginId(loginId)
-                .password(encodedPassword)
-                .nickname(nickname)
-                .role(Role.USER)
-                .build();
+        return User.of(loginId, encodedPassword, nickname, Role.USER);
     }
 }

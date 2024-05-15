@@ -32,6 +32,11 @@ public class UserSignUpRequest {
     private String nickname; //영문 소문자, 숫자만 가능 / 공백 불가 / 2 ~ 20자
 
     public UserDto toDto() {
-        return UserDto.of(loginId, password, confirmPassword, nickname);
+        return UserDto.builder()
+                .loginId(loginId)
+                .password(password)
+                .confirmPassword(confirmPassword)
+                .nickname(nickname)
+                .build();
     }
 }
