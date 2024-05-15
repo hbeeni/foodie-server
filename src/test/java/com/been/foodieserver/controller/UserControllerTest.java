@@ -4,7 +4,8 @@ import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
-import com.been.foodieserver.dto.request.UserModifyRequest;
+import com.been.foodieserver.dto.request.UserInfoModifyRequest;
+import com.been.foodieserver.dto.request.UserPasswordChangeRequest;
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.dto.response.UserInfoResponse;
@@ -66,6 +67,7 @@ class UserControllerTest {
     private String loginApi;
     private String logoutApi;
     private String myInfoApi;
+    private String passwordApi;
 
     @BeforeEach
     void setUp() {
@@ -74,6 +76,7 @@ class UserControllerTest {
         loginApi = userApi + "/login";
         logoutApi = userApi + "/logout";
         myInfoApi = userApi + "/my";
+        passwordApi = userApi + "/my/password";
     }
 
     @DisplayName("요청이 유효하면 회원가입 성공")
@@ -293,7 +296,7 @@ class UserControllerTest {
         String loginId = "user";
         String nickname = "nickname";
 
-        UserModifyRequest request = new UserModifyRequest(nickname);
+        UserInfoModifyRequest request = new UserInfoModifyRequest(nickname);
         User user = User.of(loginId, null, nickname, Role.USER);
         UserInfoResponse response = UserInfoResponse.my(user);
 
@@ -314,5 +317,31 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.data.loginId").value(loginId));
 
         then(userService).should().modifyMyInfo(eq(loginId), any(UserDto.class));
+    }
+
+    @WithMockUser
+    @DisplayName("비밀번호  요청이 유효하면 비밀번호 변경 성공")
+    @Test
+    void changePassword_IfRequestIsValid() throws Exception {
+        //Given
+        String loginId = "user";
+        String currentPassword = "current123";
+        String newPassword = "newpasswd123";
+
+        UserPasswordChangeRequest request = new UserPasswordChangeRequest(currentPassword, newPassword, newPassword);
+
+        willDoNothing().given(userService).changePassword(loginId, currentPassword, newPassword, newPassword);
+
+        //When & Then
+        mockMvc.perform(put(passwordApi)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .accept(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+        then(userService).should().changePassword(loginId, currentPassword, newPassword, newPassword);
     }
 }

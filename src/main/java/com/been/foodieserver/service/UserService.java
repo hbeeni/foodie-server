@@ -31,8 +31,8 @@ public class UserService {
             throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
-        if (!checkPasswordMatch(userDto)) {
-            throw new CustomException(ErrorCode.CHECK_PASSWORD);
+        if (!arePasswordsMatching(userDto.getPassword(), userDto.getConfirmPassword())) {
+            throw new CustomException(ErrorCode.PASSWORD_CONFIRM_MISMATCH);
         }
 
         userRepository.save(userDto.toEntity(encoder.encode(userDto.getPassword())));
@@ -46,9 +46,6 @@ public class UserService {
         return userRepository.existsByNickname(nickname);
     }
 
-    private boolean checkPasswordMatch(UserDto userDto) {
-        return userDto.getPassword().equals(userDto.getConfirmPassword());
-    }
 
     public Optional<CustomUserDetails> searchUser(String loginId) {
         return userRepository.findByLoginId(loginId).map(CustomUserDetails::from);
@@ -71,6 +68,28 @@ public class UserService {
         user.modifyInfo(userDto.getNickname());
 
         return UserInfoResponse.my(user);
+    }
+
+    public void changePassword(String loginId, String currentPassword, String newPassword, String confirmNewPassword) {
+        if (!arePasswordsMatching(newPassword, confirmNewPassword)) {
+            throw new CustomException(ErrorCode.PASSWORD_CONFIRM_MISMATCH);
+        }
+
+        User user = getUserEntityOrException(loginId);
+
+        if (!isCurrentPasswordCorrect(user, currentPassword)) {
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        user.changePassword(encoder.encode(newPassword));
+    }
+
+    private boolean isCurrentPasswordCorrect(User user, String currentPassword) {
+        return encoder.matches(currentPassword, user.getPassword());
+    }
+
+    private boolean arePasswordsMatching(String password, String confirmPassword) {
+        return password.equals(confirmPassword);
     }
 
     private User getUserEntityOrException(String loginId) {

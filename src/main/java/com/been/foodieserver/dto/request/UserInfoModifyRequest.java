@@ -8,12 +8,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import static com.been.foodieserver.dto.request.UserRequestValidation.NICKNAME_MESSAGE;
+import static com.been.foodieserver.dto.request.UserRequestValidation.NICKNAME_PATTERN;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserModifyRequest {
+public class UserInfoModifyRequest {
 
-    @Pattern(regexp = "^[a-z0-9]{2,20}$", message = "닉네임은 2 ~ 20자의 영문 소문자, 숫자만 사용 가능합니다.")
+    @Pattern(regexp = NICKNAME_PATTERN, message = NICKNAME_MESSAGE)
     @Size(min = 2, max = 20)
     @NotBlank
     private String nickname; //영문 소문자, 숫자만 가능 / 공백 불가 / 2 ~ 20자
