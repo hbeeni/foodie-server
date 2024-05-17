@@ -39,12 +39,12 @@ public class UserController {
     }
 
     @GetMapping("/id/exists")
-    public ResponseEntity<ApiResponse<Boolean>> checkLoginId(@RequestParam String loginId) {
+    public ResponseEntity<ApiResponse<Boolean>> checkLoginId(@RequestParam("loginId") String loginId) {
         return ResponseEntity.ok(ApiResponse.success(userService.isLoginIdDuplicated(loginId)));
     }
 
     @GetMapping("/nickname/exists")
-    public ResponseEntity<ApiResponse<Boolean>> checkNickname(@RequestParam String nickname) {
+    public ResponseEntity<ApiResponse<Boolean>> checkNickname(@RequestParam("nickname") String nickname) {
         return ResponseEntity.ok(ApiResponse.success(userService.isNicknameDuplicated(nickname)));
     }
 
@@ -54,7 +54,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse<UserInfoResponse>> getUserInfo(@PathVariable String userId) {
+    public ResponseEntity<ApiResponse<UserInfoResponse>> getUserInfo(@PathVariable("userId") String userId) {
         return ResponseEntity.ok(ApiResponse.success(userService.getUserInfo(userId)));
     }
 
