@@ -84,6 +84,12 @@ public class UserService {
         user.changePassword(encoder.encode(newPassword));
     }
 
+    public UserInfoResponse deleteUser(String loginId) {
+        User user = getUserEntityOrException(loginId);
+        user.withdraw();
+        return UserInfoResponse.my(user);
+    }
+
     private boolean isCurrentPasswordCorrect(User user, String currentPassword) {
         return encoder.matches(currentPassword, user.getPassword());
     }

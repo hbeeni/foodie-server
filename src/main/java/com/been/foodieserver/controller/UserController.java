@@ -15,6 +15,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -69,6 +70,14 @@ public class UserController {
         userService.changePassword(userDetails.getUsername(), request.getCurrentPassword(), request.getNewPassword(), request.getConfirmNewPassword());
         forceLogout(servletRequest, servletResponse);
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @DeleteMapping("/my")
+    public ResponseEntity<ApiResponse<UserInfoResponse>> deleteUser(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
+                                                                    @AuthenticationPrincipal UserDetails userDetails) {
+        UserInfoResponse response = userService.deleteUser(userDetails.getUsername());
+        forceLogout(servletRequest, servletResponse);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     private void forceLogout(HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
