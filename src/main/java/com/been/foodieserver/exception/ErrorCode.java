@@ -15,6 +15,10 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "사용자를 찾을 수 없습니다."),
     AUTH_FAIL(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."),
 
+    FOLLOW_NOT_FOUND(HttpStatus.BAD_REQUEST, "팔로우 정보를 찾을 수 없습니다."),
+    FOLLOWEE_NOT_FOUND(HttpStatus.BAD_REQUEST, "팔로우할 사용자를 찾을 수 없습니다."),
+    CANNOT_FOLLOW_OR_UNFOLLOW_SELF(HttpStatus.BAD_REQUEST, "본인을 팔로우/언팔로우할 수 없습니다."),
+
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "internal server error");
 
     private final HttpStatus status;

@@ -25,22 +25,22 @@ public class Follow extends BaseCreatedAtEntity {
 
     @Setter
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    private User user;
+    private User follower; //팔로우 하는 사용자
 
     @Setter
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    private User target;
+    private User followee; //팔로우 당한 사용자
 
     protected Follow() {
     }
 
-    private Follow(User user, User target) {
-        this.user = user;
-        this.target = target;
+    private Follow(User follower, User followee) {
+        this.follower = follower;
+        this.followee = followee;
     }
 
-    public static Follow of(User user, User target) {
-        return new Follow(user, target);
+    public static Follow of(User follower, User followee) {
+        return new Follow(follower, followee);
     }
 
     @Override
