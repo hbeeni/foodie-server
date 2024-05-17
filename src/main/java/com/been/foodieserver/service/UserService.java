@@ -8,12 +8,17 @@ import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Transactional
 @Service
@@ -82,6 +87,25 @@ public class UserService {
         }
 
         user.changePassword(encoder.encode(newPassword));
+    }
+
+    public UserInfoResponse deleteUser(String loginId) {
+        User user = getUserEntityOrException(loginId);
+        user.withdraw();
+        return UserInfoResponse.my(user);
+    }
+
+    /**
+     * 매일 3시 탈퇴한 지 30일이 지난 사용자 삭제
+     */
+    @Scheduled(cron = "${schedules.cron.user.delete}")
+    public void deleteUsersInactiveFor30Days() {
+        log.info("execute UserService.deleteUsersInactiveFor30Days");
+
+        Timestamp thirtyDaysAgo = Timestamp.valueOf(LocalDateTime.now().minusDays(30));
+        int deletedCount = userRepository.deleteAllByDeletedAtBefore(thirtyDaysAgo);
+
+        log.info("delete {} users", deletedCount);
     }
 
     private boolean isCurrentPasswordCorrect(User user, String currentPassword) {

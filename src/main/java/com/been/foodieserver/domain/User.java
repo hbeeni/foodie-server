@@ -10,14 +10,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.ToString;
-import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Getter
 @ToString(callSuper = true)
-@SQLDelete(sql = "UPDATE users SET deleted_at = NOW() where id = ?")
 @SQLRestriction("deleted_at is NULL")
 @Table(name = "users")
 @Entity
@@ -60,6 +60,10 @@ public class User extends BaseTimeEntity {
 
     public void changePassword(String newPassword) {
         this.password = newPassword;
+    }
+
+    public void withdraw() {
+        setDeletedAt(Timestamp.valueOf(LocalDateTime.now()));
     }
 
     @Override

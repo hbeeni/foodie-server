@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -366,5 +367,20 @@ class UserServiceTest {
 
         then(userRepository).should().findByLoginId(user.getLoginId());
         then(encoder).should().matches(currentPassword, user.getPassword());
+    }
+
+    @DisplayName("회원 탈퇴 시 탈퇴 날짜 입력")
+    @Test
+    void setDeletionDate_WhenDeletingUser() {
+        //Given
+        when(userRepository.findByLoginId(user.getLoginId())).thenReturn(Optional.of(user));
+
+        //When
+        userService.deleteUser(user.getLoginId());
+
+        //Then
+        assertThat(user).hasFieldOrProperty("deletedAt");
+
+        then(userRepository).should().findByLoginId(user.getLoginId());
     }
 }

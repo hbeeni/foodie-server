@@ -24,8 +24,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -35,8 +38,10 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -68,6 +73,7 @@ class UserControllerTest {
     private String logoutApi;
     private String myInfoApi;
     private String passwordApi;
+    private String deleteApi;
 
     @BeforeEach
     void setUp() {
@@ -77,6 +83,7 @@ class UserControllerTest {
         logoutApi = userApi + "/logout";
         myInfoApi = userApi + "/my";
         passwordApi = userApi + "/my/password";
+        deleteApi = userApi + "/my";
     }
 
     @DisplayName("요청이 유효하면 회원가입 성공")
@@ -320,7 +327,7 @@ class UserControllerTest {
     }
 
     @WithMockUser
-    @DisplayName("비밀번호  요청이 유효하면 비밀번호 변경 성공")
+    @DisplayName("비밀번호 요청이 유효하면 비밀번호 변경 성공")
     @Test
     void changePassword_IfRequestIsValid() throws Exception {
         //Given
@@ -343,5 +350,29 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.data").doesNotExist());
 
         then(userService).should().changePassword(loginId, currentPassword, newPassword, newPassword);
+    }
+
+    @WithMockUser
+    @DisplayName("회원 탈퇴 성공")
+    @Test
+    void deleteUser_IfRequestIsValid() throws Exception {
+        //Given
+        String loginId = "user";
+        User user = User.of(loginId, null, "nickname", Role.USER);
+        ReflectionTestUtils.setField(user, "deletedAt", Timestamp.from(Instant.now()));
+        UserInfoResponse response = UserInfoResponse.my(user);
+
+        when(userService.deleteUser(loginId)).thenReturn(response);
+
+        //When & Then
+        mockMvc.perform(delete(deleteApi)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").exists())
+                .andExpect(jsonPath("$.data.loginId").value(loginId))
+                .andExpect(jsonPath("$.data.deletedAt").isNotEmpty());
+
+        then(userService).should().deleteUser(loginId);
     }
 }

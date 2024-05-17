@@ -5,11 +5,13 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import static com.been.foodieserver.dto.request.UserRequestValidation.PASSWORD_MESSAGE;
 import static com.been.foodieserver.dto.request.UserRequestValidation.PASSWORD_PATTERN;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 public class UserPasswordChangeRequest {
 

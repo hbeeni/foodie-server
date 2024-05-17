@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import static com.been.foodieserver.dto.request.UserRequestValidation.LOGIN_ID_MESSAGE;
 import static com.been.foodieserver.dto.request.UserRequestValidation.LOGIN_ID_PATTERN;
@@ -15,6 +16,7 @@ import static com.been.foodieserver.dto.request.UserRequestValidation.PASSWORD_M
 import static com.been.foodieserver.dto.request.UserRequestValidation.PASSWORD_PATTERN;
 
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 public class UserSignUpRequest {
 
