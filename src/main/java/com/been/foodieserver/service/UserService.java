@@ -116,7 +116,7 @@ public class UserService {
         return password.equals(confirmPassword);
     }
 
-    private User getUserEntityOrException(String loginId) {
+    public User getUserEntityOrException(String loginId) {
         return userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
