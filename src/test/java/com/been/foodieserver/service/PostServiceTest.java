@@ -180,4 +180,48 @@ class PostServiceTest {
         then(userService).shouldHaveNoInteractions();
         then(postRepository).shouldHaveNoMoreInteractions();
     }
+
+    @DisplayName("게시글 삭제 요청이 유효하면 게시글 삭제 성공")
+    @Test
+    void deletePost_IfRequestIsValid() {
+        //Given
+        given(postRepository.findWithFetchJoinByIdAndUser_LoginId(post.getId(), user.getLoginId())).willReturn(Optional.of(post));
+        willDoNothing().given(postRepository).flush();
+
+        //When
+        PostResponse result = postService.deletePost(user.getLoginId(), post.getId());
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getPostId()).isEqualTo(post.getId());
+        assertThat(result.getWriter()).isNotNull();
+        assertThat(result.getTitle()).isNotNull();
+        assertThat(result.getDeletedAt()).isNotNull();
+
+        then(postRepository).should().findWithFetchJoinByIdAndUser_LoginId(post.getId(), user.getLoginId());
+        then(postRepository).should().flush();
+        then(categoryRepository).shouldHaveNoInteractions();
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("삭제할 게시글이 존재하지 않으면 예외 발생")
+    @Test
+    void throwsException_IfPostDoesntExist_WhenDeletingPost() {
+        //Given
+        String loginId = user.getLoginId();
+        Long postId = post.getId();
+
+        given(postRepository.findWithFetchJoinByIdAndUser_LoginId(postId, user.getLoginId())).willReturn(Optional.empty());
+
+        //When
+        assertThatThrownBy(() -> postService.deletePost(loginId, postId))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
+
+        //Then
+        then(postRepository).should().findWithFetchJoinByIdAndUser_LoginId(postId, loginId);
+        then(postRepository).shouldHaveNoMoreInteractions();
+        then(categoryRepository).shouldHaveNoInteractions();
+        then(userService).shouldHaveNoInteractions();
+    }
 }

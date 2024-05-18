@@ -24,6 +24,10 @@ public class PostResponse {
     private Timestamp modifiedAt;
     private Timestamp deletedAt;
 
+    public static PostResponse of(Post post) {
+        return of(post.getUser(), post.getCategory(), post);
+    }
+
     public static PostResponse of(User user, Category category, Post post) {
         return new PostResponse(post.getId(),
                 Writer.of(user),

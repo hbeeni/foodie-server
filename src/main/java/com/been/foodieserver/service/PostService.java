@@ -45,6 +45,20 @@ public class PostService {
         return PostResponse.of(user, category, post);
     }
 
+    public PostResponse deletePost(String loginId, Long postId) {
+        Post post = getPostWithFetchJoinByUserOrException(postId, loginId);
+        post.delete();
+
+        postRepository.flush();
+
+        return PostResponse.of(post);
+    }
+
+    private Post getPostWithFetchJoinByUserOrException(Long postId, String loginId) {
+        return postRepository.findWithFetchJoinByIdAndUser_LoginId(postId, loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+    }
+
     private Post getPostByUserOrException(Long postId, String loginId) {
         return postRepository.findByIdAndUser_LoginId(postId, loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));

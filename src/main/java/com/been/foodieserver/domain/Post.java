@@ -62,6 +62,10 @@ public class Post extends BaseTimeEntity {
         this.content = content;
     }
 
+    public void delete() {
+        setDeletedAt();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
