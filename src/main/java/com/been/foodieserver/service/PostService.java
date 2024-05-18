@@ -25,12 +25,33 @@ public class PostService {
     private final PostRepository postRepository;
 
     public PostResponse writePost(String loginId, PostDto dto) {
-        Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
-        User user = userService.getUserEntityOrException(loginId);
+        Category category = getCategoryOrException(dto.getCategoryId());
+        User user = userService.getUserOrException(loginId);
 
         Post savedPost = postRepository.save(dto.toEntity(user, category));
 
         return PostResponse.of(user, category, savedPost);
+    }
+
+    public PostResponse modifyPost(String loginId, Long postId, PostDto dto) {
+        Category category = getCategoryOrException(dto.getCategoryId());
+        Post post = getPostByUserOrException(postId, loginId);
+        User user = userService.getUserOrException(loginId);
+
+        post.modify(category, dto.getTitle(), dto.getContent());
+
+        postRepository.flush();
+
+        return PostResponse.of(user, category, post);
+    }
+
+    private Post getPostByUserOrException(Long postId, String loginId) {
+        return postRepository.findByIdAndUser_LoginId(postId, loginId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+    }
+
+    private Category getCategoryOrException(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CustomException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 }

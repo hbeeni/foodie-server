@@ -20,6 +20,7 @@ public enum ErrorCode {
     CANNOT_FOLLOW_OR_UNFOLLOW_SELF(HttpStatus.BAD_REQUEST, "본인을 팔로우/언팔로우할 수 없습니다."),
 
     CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "카테고리를 찾을 수 없습니다."),
+    POST_NOT_FOUND(HttpStatus.BAD_REQUEST, "게시글을 찾을 수 없습니다."),
 
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "internal server error");
 

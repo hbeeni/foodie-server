@@ -56,6 +56,12 @@ public class Post extends BaseTimeEntity {
         return new Post(user, category, title, content);
     }
 
+    public void modify(Category category, String title, String content) {
+        this.category = category;
+        this.title = title;
+        this.content = content;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
