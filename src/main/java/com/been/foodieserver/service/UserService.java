@@ -57,11 +57,11 @@ public class UserService {
     }
 
     public UserInfoResponse getMyInfo(String loginId) {
-        return UserInfoResponse.my(getUserEntityOrException(loginId));
+        return UserInfoResponse.my(getUserOrException(loginId));
     }
 
     public UserInfoResponse getUserInfo(String loginId) {
-        return UserInfoResponse.others(getUserEntityOrException(loginId));
+        return UserInfoResponse.others(getUserOrException(loginId));
     }
 
     public UserInfoResponse modifyMyInfo(String loginId, UserDto userDto) {
@@ -69,7 +69,7 @@ public class UserService {
             throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
-        User user = getUserEntityOrException(loginId);
+        User user = getUserOrException(loginId);
         user.modifyInfo(userDto.getNickname());
 
         return UserInfoResponse.my(user);
@@ -80,7 +80,7 @@ public class UserService {
             throw new CustomException(ErrorCode.PASSWORD_CONFIRM_MISMATCH);
         }
 
-        User user = getUserEntityOrException(loginId);
+        User user = getUserOrException(loginId);
 
         if (!isCurrentPasswordCorrect(user, currentPassword)) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
@@ -90,7 +90,7 @@ public class UserService {
     }
 
     public UserInfoResponse deleteUser(String loginId) {
-        User user = getUserEntityOrException(loginId);
+        User user = getUserOrException(loginId);
         user.withdraw();
         return UserInfoResponse.my(user);
     }
@@ -116,7 +116,7 @@ public class UserService {
         return password.equals(confirmPassword);
     }
 
-    public User getUserEntityOrException(String loginId) {
+    public User getUserOrException(String loginId) {
         return userRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }

@@ -12,8 +12,6 @@ import lombok.Getter;
 import lombok.ToString;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Getter
@@ -63,7 +61,7 @@ public class User extends BaseTimeEntity {
     }
 
     public void withdraw() {
-        setDeletedAt(Timestamp.valueOf(LocalDateTime.now()));
+        setDeletedAt();
     }
 
     @Override
