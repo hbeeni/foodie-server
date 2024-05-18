@@ -61,6 +61,46 @@ class PostServiceTest {
                 .build();
     }
 
+    @DisplayName("게시글 요청이 유효하면 게시글 조회 성공")
+    @Test
+    void getPost_IfRequestIsValid() {
+        //Given
+        given(postRepository.findWithFetchJoinById(post.getId())).willReturn(Optional.of(post));
+
+        //When
+        PostResponse result = postService.getPost(post.getId());
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getPostId()).isEqualTo(post.getId());
+        assertThat(result.getCategoryName()).isEqualTo(category.getName());
+        assertThat(result.getWriter()).isNotNull();
+        assertThat(result.getWriter().getLoginId()).isEqualTo(user.getLoginId());
+
+        then(postRepository).should().findWithFetchJoinById(post.getId());
+        then(userService).shouldHaveNoInteractions();
+        then(categoryRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("조회할 게시글이 존재하지 않으면 예외 발생")
+    @Test
+    void throwsException_IfPostDoesntExist_WhenGettingPost() {
+        //Given
+        Long postId = post.getId();
+
+        given(postRepository.findWithFetchJoinById(postId)).willReturn(Optional.empty());
+
+        //When
+        assertThatThrownBy(() -> postService.getPost(postId))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
+
+        //Then
+        then(postRepository).should().findWithFetchJoinById(postId);
+        then(userService).shouldHaveNoInteractions();
+        then(categoryRepository).shouldHaveNoInteractions();
+    }
+
     @DisplayName("게시글 요청이 유효하면 게시글 작성 성공")
     @Test
     void writePost_IfRequestIsValid() {

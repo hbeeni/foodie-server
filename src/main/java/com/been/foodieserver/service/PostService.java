@@ -24,6 +24,12 @@ public class PostService {
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
 
+    public PostResponse getPost(Long postId) {
+        Post post = postRepository.findWithFetchJoinById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+        return PostResponse.of(post);
+    }
+
     public PostResponse writePost(String loginId, PostDto dto) {
         Category category = getCategoryOrException(dto.getCategoryId());
         User user = userService.getUserOrException(loginId);

@@ -11,5 +11,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Optional<Post> findByIdAndUser_LoginId(Long postId, String userLoginId);
 
     @EntityGraph(attributePaths = {"user", "category"})
+    Optional<Post> findWithFetchJoinById(Long postId);
+
+    @EntityGraph(attributePaths = {"user", "category"})
     Optional<Post> findWithFetchJoinByIdAndUser_LoginId(Long postId, String userLoginId);
 }
