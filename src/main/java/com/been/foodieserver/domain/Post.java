@@ -32,6 +32,10 @@ public class Post extends BaseTimeEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private User user;
 
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    private Category category;
+
     @Column(nullable = false, length = 100)
     private String title;
 
@@ -41,14 +45,15 @@ public class Post extends BaseTimeEntity {
     protected Post() {
     }
 
-    private Post(User user, String title, String content) {
+    private Post(User user, Category category, String title, String content) {
         this.user = user;
+        this.category = category;
         this.title = title;
         this.content = content;
     }
 
-    public static Post of(User user, String title, String content) {
-        return new Post(user, title, content);
+    public static Post of(User user, Category category, String title, String content) {
+        return new Post(user, category, title, content);
     }
 
     @Override
