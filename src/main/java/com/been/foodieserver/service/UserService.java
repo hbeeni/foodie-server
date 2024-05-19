@@ -28,11 +28,11 @@ public class UserService {
     private final UserRepository userRepository;
 
     public void signUp(UserDto userDto) {
-        if (isLoginIdDuplicated(userDto.getLoginId())) {
+        if (isLoginIdExist(userDto.getLoginId())) {
             throw new CustomException(ErrorCode.DUPLICATE_ID);
         }
 
-        if (isNicknameDuplicated(userDto.getNickname())) {
+        if (isNicknameExist(userDto.getNickname())) {
             throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
@@ -43,11 +43,11 @@ public class UserService {
         userRepository.save(userDto.toEntity(encoder.encode(userDto.getPassword())));
     }
 
-    public boolean isLoginIdDuplicated(String loginId) {
+    public boolean isLoginIdExist(String loginId) {
         return userRepository.existsByLoginId(loginId);
     }
 
-    public boolean isNicknameDuplicated(String nickname) {
+    public boolean isNicknameExist(String nickname) {
         return userRepository.existsByNickname(nickname);
     }
 

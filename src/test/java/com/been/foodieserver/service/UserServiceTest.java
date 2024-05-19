@@ -133,7 +133,7 @@ class UserServiceTest {
         given(userRepository.existsByLoginId(loginId)).willReturn(false);
 
         //When
-        boolean result = userService.isLoginIdDuplicated(loginId);
+        boolean result = userService.isLoginIdExist(loginId);
 
         //Then
         assertThat(result).isFalse();
@@ -148,7 +148,7 @@ class UserServiceTest {
         given(userRepository.existsByNickname(nickname)).willReturn(false);
 
         //When
-        boolean result = userService.isNicknameDuplicated(nickname);
+        boolean result = userService.isNicknameExist(nickname);
 
         //Then
         assertThat(result).isFalse();

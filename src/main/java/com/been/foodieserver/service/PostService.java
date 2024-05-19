@@ -29,8 +29,22 @@ public class PostService {
     private final PostRepository postRepository;
 
     public Page<PostResponse> getPostList(int pageNum, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+        Pageable pageable = makePageable(pageNum, pageSize);
         return postRepository.findAll(pageable).map(PostResponse::of);
+    }
+
+    public Page<PostResponse> getMyPostList(String loginId, int pageNum, int pageSize) {
+        Pageable pageable = makePageable(pageNum, pageSize);
+        return postRepository.findAllByUser_LoginId(pageable, loginId).map(PostResponse::of);
+    }
+
+    public Page<PostResponse> getPostListByUserLoginId(String writerLoginId, int pageNum, int pageSize) {
+        if (!userService.isLoginIdExist(writerLoginId)) {
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        PageRequest pageable = makePageable(pageNum, pageSize);
+        return postRepository.findAllByUser_LoginId(pageable, writerLoginId).map(PostResponse::of);
     }
 
     public PostResponse getPost(Long postId) {
@@ -67,6 +81,10 @@ public class PostService {
         postRepository.flush();
 
         return PostResponse.of(post);
+    }
+
+    private static PageRequest makePageable(int pageNum, int pageSize) {
+        return PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
     }
 
     private Post getPostWithFetchJoinByUserOrException(Long postId, String loginId) {

@@ -96,6 +96,76 @@ class PostControllerTest {
     }
 
     @WithMockUser
+    @DisplayName("요청이 유효하면 내 게시글 목록 조회 성공")
+    @Test
+    void getMyPostList_IfRequestIsValid() throws Exception {
+        //Given
+        String loginId = "user";
+        Post post1 = PostFixture.get("title1", loginId, "자유 게시판");
+        Post post2 = PostFixture.get("title2", loginId, "자유 게시판");
+
+        PostResponse postResponse1 = PostResponse.of(post1);
+        PostResponse postResponse2 = PostResponse.of(post2);
+
+        Page<PostResponse> postResponsePage = new PageImpl<>(List.of(postResponse2, postResponse1));
+
+        int pageNum = 1;
+        int pageSize = postResponsePage.getSize();
+
+        when(postService.getMyPostList(loginId, pageNum, pageSize)).thenReturn(postResponsePage);
+
+        //When & Then
+        mockMvc.perform(get(postApi + "/my")
+                        .param("pageNum", String.valueOf(pageNum))
+                        .param("pageSize", String.valueOf(pageSize))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].title").value(post2.getTitle()))
+                .andExpect(jsonPath("$.pagination").exists())
+                .andExpect(jsonPath("$.pagination.currentPage").value(pageNum))
+                .andExpect(jsonPath("$.pagination.pageSize").value(pageSize));
+
+        then(postService).should().getMyPostList(loginId, pageNum, pageSize);
+    }
+
+    @WithMockUser
+    @DisplayName("요청이 유효하면 다른 사용자 게시글 목록 조회 성공")
+    @Test
+    void getPostListByUser_IfRequestIsValid() throws Exception {
+        //Given
+        String postWriterLoginId = "writer";
+        Post post1 = PostFixture.get("title1", postWriterLoginId, "자유 게시판");
+        Post post2 = PostFixture.get("title2", postWriterLoginId, "자유 게시판");
+
+        PostResponse postResponse1 = PostResponse.of(post1);
+        PostResponse postResponse2 = PostResponse.of(post2);
+
+        Page<PostResponse> postResponsePage = new PageImpl<>(List.of(postResponse2, postResponse1));
+
+        int pageNum = 1;
+        int pageSize = postResponsePage.getSize();
+
+        when(postService.getPostListByUserLoginId(postWriterLoginId, pageNum, pageSize)).thenReturn(postResponsePage);
+
+        //When & Then
+        mockMvc.perform(get(postApi + "/users/" + postWriterLoginId)
+                        .param("pageNum", String.valueOf(pageNum))
+                        .param("pageSize", String.valueOf(pageSize))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].title").value(post2.getTitle()))
+                .andExpect(jsonPath("$.pagination").exists())
+                .andExpect(jsonPath("$.pagination.currentPage").value(pageNum))
+                .andExpect(jsonPath("$.pagination.pageSize").value(pageSize));
+
+        then(postService).should().getPostListByUserLoginId(postWriterLoginId, pageNum, pageSize);
+    }
+
+    @WithMockUser
     @DisplayName("요청이 유효하면 게시글 조회 성공")
     @Test
     void getPost_IfRequestIsValid() throws Exception {

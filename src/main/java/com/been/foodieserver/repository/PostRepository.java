@@ -13,6 +13,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @EntityGraph(attributePaths = {"user", "category"})
     Page<Post> findAll(Pageable pageable);
 
+    @EntityGraph(attributePaths = {"user", "category"})
+    Page<Post> findAllByUser_LoginId(Pageable pageable, String loginId);
+
     Optional<Post> findByIdAndUser_LoginId(Long postId, String userLoginId);
 
     @EntityGraph(attributePaths = {"user", "category"})
