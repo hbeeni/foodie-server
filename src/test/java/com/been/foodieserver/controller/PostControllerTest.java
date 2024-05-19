@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -23,12 +25,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -55,6 +59,64 @@ class PostControllerTest {
     @BeforeEach
     void setUp() {
         postApi = baseUrl + "/posts";
+    }
+
+    @WithMockUser
+    @DisplayName("요청이 유효하면 게시글 목록 조회 성공")
+    @Test
+    void getPostList_IfRequestIsValid() throws Exception {
+        //Given
+        Post post1 = PostFixture.get("title1", "user", "자유 게시판");
+        Post post2 = PostFixture.get("title2", "user", "자유 게시판");
+
+        PostResponse postResponse1 = PostResponse.of(post1);
+        PostResponse postResponse2 = PostResponse.of(post2);
+
+        Page<PostResponse> postResponsePage = new PageImpl<>(List.of(postResponse2, postResponse1));
+
+        int pageNum = 1;
+        int pageSize = postResponsePage.getSize();
+
+        when(postService.getPostList(pageNum, pageSize)).thenReturn(postResponsePage);
+
+        //When & Then
+        mockMvc.perform(get(postApi)
+                        .param("pageNum", String.valueOf(pageNum))
+                        .param("pageSize", String.valueOf(pageSize))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].title").value(post2.getTitle()))
+                .andExpect(jsonPath("$.pagination").exists())
+                .andExpect(jsonPath("$.pagination.currentPage").value(pageNum))
+                .andExpect(jsonPath("$.pagination.pageSize").value(pageSize));
+
+        then(postService).should().getPostList(pageNum, pageSize);
+    }
+
+    @WithMockUser
+    @DisplayName("요청이 유효하면 게시글 조회 성공")
+    @Test
+    void getPost_IfRequestIsValid() throws Exception {
+        //Given
+        Post post = PostFixture.get("title", "user", "자유 게시판");
+        Long postId = post.getId();
+
+        PostResponse response = PostResponse.of(post.getUser(), post.getCategory(), post);
+
+        when(postService.getPost(postId)).thenReturn(response);
+
+        //When & Then
+        mockMvc.perform(get(postApi + "/" + postId)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").exists())
+                .andExpect(jsonPath("$.data.title").value(response.getTitle()))
+                .andExpect(jsonPath("$.data.writer.loginId").value(response.getWriter().getLoginId()));
+
+        then(postService).should().getPost(postId);
     }
 
     @WithMockUser
@@ -116,9 +178,7 @@ class PostControllerTest {
     @Test
     void deletePost_IfRequestIsValid() throws Exception {
         //Given
-        PostWriteRequest request = new PostWriteRequest(1L, "title", "content");
-
-        Post post = PostFixture.get(request.getTitle(), "user", "자유 게시판");
+        Post post = PostFixture.get("title", "user", "자유 게시판");
         Long postId = post.getId();
         ReflectionTestUtils.setField(post, "deletedAt", Timestamp.valueOf(LocalDateTime.now()));
 
@@ -128,8 +188,7 @@ class PostControllerTest {
 
         //When & Then
         mockMvc.perform(delete(postApi + "/" + postId)
-                        .accept(MediaType.APPLICATION_JSON)
-                        .content(mapper.writeValueAsString(request)))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
                 .andExpect(jsonPath("$.data").exists())
