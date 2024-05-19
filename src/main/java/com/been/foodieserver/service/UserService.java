@@ -72,6 +72,8 @@ public class UserService {
         User user = getUserOrException(loginId);
         user.modifyInfo(userDto.getNickname());
 
+        userRepository.flush();
+
         return UserInfoResponse.my(user);
     }
 
@@ -92,6 +94,9 @@ public class UserService {
     public UserInfoResponse deleteUser(String loginId) {
         User user = getUserOrException(loginId);
         user.withdraw();
+
+        userRepository.flush();
+
         return UserInfoResponse.my(user);
     }
 

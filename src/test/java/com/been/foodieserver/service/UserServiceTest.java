@@ -25,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -273,6 +274,7 @@ class UserServiceTest {
 
         given(userRepository.existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId)).willReturn(false);
         given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+        willDoNothing().given(userRepository).flush();
 
         //When
         UserInfoResponse result = userService.modifyMyInfo(loginId, userDto);
@@ -283,6 +285,7 @@ class UserServiceTest {
 
         then(userRepository).should().existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId);
         then(userRepository).should().findByLoginId(loginId);
+        then(userRepository).should().flush();
     }
 
     @DisplayName("닉네임 수정 시 다른 유저의 닉네임과 중복되면 예외 발생")
@@ -374,6 +377,7 @@ class UserServiceTest {
     void setDeletionDate_WhenDeletingUser() {
         //Given
         when(userRepository.findByLoginId(user.getLoginId())).thenReturn(Optional.of(user));
+        willDoNothing().given(userRepository).flush();
 
         //When
         userService.deleteUser(user.getLoginId());
@@ -382,5 +386,6 @@ class UserServiceTest {
         assertThat(user).hasFieldOrProperty("deletedAt");
 
         then(userRepository).should().findByLoginId(user.getLoginId());
+        then(userRepository).should().flush();
     }
 }
