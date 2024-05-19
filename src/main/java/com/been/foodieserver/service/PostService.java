@@ -18,6 +18,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostService {
 
     private final UserService userService;
+    private final FollowService followService;
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
 
@@ -45,6 +48,15 @@ public class PostService {
 
         PageRequest pageable = makePageable(pageNum, pageSize);
         return postRepository.findAllByUser_LoginId(pageable, writerLoginId).map(PostResponse::of);
+    }
+
+    /**
+     * 팔로우한 유저의 게시글 목록 조회
+     */
+    public Page<PostResponse> getPostsByFollowees(String loginId, int pageNum, int pageSize) {
+        Pageable pageable = makePageable(pageNum, pageSize);
+        Set<String> followeeLoginIdSet = followService.getFolloweeLoginIds(loginId);
+        return postRepository.findAllByUser_LoginIdIn(pageable, followeeLoginIdSet).map(PostResponse::of);
     }
 
     public PostResponse getPost(Long postId) {

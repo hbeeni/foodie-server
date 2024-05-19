@@ -12,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
@@ -51,6 +54,13 @@ public class FollowService {
 
         followRepository.deleteByFollower_LoginIdAndFollowee_LoginId(followerLoginId, followeeLoginId);
         return FollowResponse.unfollow(followerLoginId, followeeLoginId);
+    }
+
+    public Set<String> getFolloweeLoginIds(String loginId) {
+        return followRepository.findAllByFollower_LoginId(loginId).stream()
+                .map(Follow::getFollowee)
+                .map(User::getLoginId)
+                .collect(Collectors.toSet());
     }
 
     private boolean isFollowExists(String followerLoginId, String followeeLoginId) {

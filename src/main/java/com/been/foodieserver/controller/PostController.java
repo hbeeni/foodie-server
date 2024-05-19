@@ -53,6 +53,13 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(postService.getPostListByUserLoginId(writerLoginId, pageNum, pageSize)));
     }
 
+    @GetMapping("/follows")
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getFeed(@AuthenticationPrincipal UserDetails userDetails,
+                                                                   @RequestParam(value = "pageNum", defaultValue = "1") @Min(1) int pageNum,
+                                                                   @RequestParam(value = "pageSize", defaultValue = "10") @Min(1) int pageSize) {
+        return ResponseEntity.ok(ApiResponse.success(postService.getPostsByFollowees(userDetails.getUsername(), pageNum, pageSize)));
+    }
+
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable("postId") Long postId) {
         return ResponseEntity.ok(ApiResponse.success(postService.getPost(postId)));
