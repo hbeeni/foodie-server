@@ -28,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
@@ -91,6 +92,37 @@ class PostServiceTest {
         assertThat(result.getContent().get(0).getTitle()).isEqualTo(post2.getTitle());
 
         then(postRepository).should().findAll(any(Pageable.class));
+        then(userService).shouldHaveNoInteractions();
+        then(categoryRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("내가 작성한 게시글 목록 요청이 유효하면 내 게시글 목록 조회 성공")
+    @Test
+    void getMyPostList_IfRequestIsValid() {
+        //Given
+        String loginId = "user";
+        Post post1 = PostFixture.get(1L, "title1", loginId, "자유 게시판");
+        Post post2 = PostFixture.get(2L, "title2", loginId, "자유 게시판");
+
+        List<Post> content = List.of(post2, post1);
+        Page<Post> postPage = new PageImpl<>(content);
+
+        int pageNum = 1;
+        int pageSize = content.size();
+
+        given(postRepository.findAllByUser_LoginId(any(Pageable.class), eq(loginId))).willReturn(postPage);
+
+        //When
+        Page<PostResponse> result = postService.getMyPostList(loginId, pageNum, pageSize);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(content.size());
+        assertThat(result.getNumber() + 1).isEqualTo(pageNum);
+        assertThat(result.getSize()).isEqualTo(pageSize);
+        assertThat(result.getContent().get(0).getPostId()).isEqualTo(post2.getId());
+
+        then(postRepository).should().findAllByUser_LoginId(any(Pageable.class), eq(loginId));
         then(userService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }

@@ -33,6 +33,11 @@ public class PostService {
         return postRepository.findAll(pageable).map(PostResponse::of);
     }
 
+    public Page<PostResponse> getMyPostList(String loginId, int pageNum, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+        return postRepository.findAllByUser_LoginId(pageable, loginId).map(PostResponse::of);
+    }
+
     public PostResponse getPost(Long postId) {
         Post post = postRepository.findWithFetchJoinById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
