@@ -5,6 +5,7 @@ import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.dto.response.PostResponse;
 import com.been.foodieserver.service.PostService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,7 +17,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RequestMapping("${api.endpoint.base-url}/posts")
@@ -24,6 +28,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
 
     private final PostService postService;
+
+    /**
+     * @param pageNum  페이지 번호 (1 시작)
+     * @param pageSize 페이지 당 게시글 수
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getPostList(@RequestParam(value = "pageNum", defaultValue = "1") @Min(1) int pageNum,
+                                                                       @RequestParam(value = "pageSize", defaultValue = "10") @Min(1) int pageSize) {
+        return ResponseEntity.ok(ApiResponse.success(postService.getPostList(pageNum, pageSize)));
+    }
 
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable("postId") Long postId) {

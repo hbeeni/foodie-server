@@ -16,6 +16,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -23,6 +25,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -56,6 +59,40 @@ class PostControllerTest {
     @BeforeEach
     void setUp() {
         postApi = baseUrl + "/posts";
+    }
+
+    @WithMockUser
+    @DisplayName("요청이 유효하면 게시글 목록 조회 성공")
+    @Test
+    void getPostList_IfRequestIsValid() throws Exception {
+        //Given
+        Post post1 = PostFixture.get("title1", "user", "자유 게시판");
+        Post post2 = PostFixture.get("title2", "user", "자유 게시판");
+
+        PostResponse postResponse1 = PostResponse.of(post1);
+        PostResponse postResponse2 = PostResponse.of(post2);
+
+        Page<PostResponse> postResponsePage = new PageImpl<>(List.of(postResponse2, postResponse1));
+
+        int pageNum = 1;
+        int pageSize = postResponsePage.getSize();
+
+        when(postService.getPostList(pageNum, pageSize)).thenReturn(postResponsePage);
+
+        //When & Then
+        mockMvc.perform(get(postApi)
+                        .param("pageNum", String.valueOf(pageNum))
+                        .param("pageSize", String.valueOf(pageSize))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].title").value(post2.getTitle()))
+                .andExpect(jsonPath("$.pagination").exists())
+                .andExpect(jsonPath("$.pagination.currentPage").value(pageNum))
+                .andExpect(jsonPath("$.pagination.pageSize").value(pageSize));
+
+        then(postService).should().getPostList(pageNum, pageSize);
     }
 
     @WithMockUser

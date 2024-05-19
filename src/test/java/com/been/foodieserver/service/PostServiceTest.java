@@ -17,8 +17,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,6 +63,36 @@ class PostServiceTest {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .build();
+    }
+
+    @DisplayName("게시글 목록 요청이 유효하면 게시글 목록 조회 성공")
+    @Test
+    void getPostList_IfRequestIsValid() {
+        //Given
+        Post post1 = PostFixture.get("title1", "user", "자유 게시판");
+        Post post2 = PostFixture.get("title2", "user", "자유 게시판");
+
+        List<Post> content = List.of(post2, post1);
+        Page<Post> postPage = new PageImpl<>(content);
+
+        int pageNum = 1;
+        int pageSize = content.size();
+
+        given(postRepository.findAll(any(Pageable.class))).willReturn(postPage);
+
+        //When
+        Page<PostResponse> result = postService.getPostList(pageNum, pageSize);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(content.size());
+        assertThat(result.getNumber() + 1).isEqualTo(pageNum);
+        assertThat(result.getSize()).isEqualTo(pageSize);
+        assertThat(result.getContent().get(0).getTitle()).isEqualTo(post2.getTitle());
+
+        then(postRepository).should().findAll(any(Pageable.class));
+        then(userService).shouldHaveNoInteractions();
+        then(categoryRepository).shouldHaveNoInteractions();
     }
 
     @DisplayName("게시글 요청이 유효하면 게시글 조회 성공")

@@ -11,6 +11,10 @@ import com.been.foodieserver.repository.CategoryRepository;
 import com.been.foodieserver.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +27,11 @@ public class PostService {
     private final UserService userService;
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
+
+    public Page<PostResponse> getPostList(int pageNum, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+        return postRepository.findAll(pageable).map(PostResponse::of);
+    }
 
     public PostResponse getPost(Long postId) {
         Post post = postRepository.findWithFetchJoinById(postId)
