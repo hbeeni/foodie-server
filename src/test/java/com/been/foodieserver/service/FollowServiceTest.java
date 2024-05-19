@@ -6,6 +6,7 @@ import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.response.FollowResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.fixture.UserFixture;
 import com.been.foodieserver.repository.FollowRepository;
 import com.been.foodieserver.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -176,5 +179,45 @@ class FollowServiceTest {
         //Then
         then(followRepository).shouldHaveNoInteractions();
         then(userRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("해당 사용자가 팔로우한 사용자들의 로그인 아이디 조회 성공")
+    @Test
+    void getMyFolloweeLoginIds_IfLoginIdIsValid() {
+        //Given
+        User user = UserFixture.get(1L, "follower");
+        User followee1 = UserFixture.get(2L, "user1");
+        User followee2 = UserFixture.get(3L, "user2");
+
+        Follow follow1 = Follow.of(user, followee1);
+        Follow follow2 = Follow.of(user, followee2);
+        List<Follow> followList = List.of(follow1, follow2);
+
+        given(followRepository.findAllByFollower_LoginId(followerLoginId)).willReturn(followList);
+
+        //When
+        Set<String> result = followService.getFolloweeLoginIds(user.getLoginId());
+
+        //Then
+        assertThat(result).isNotNull().hasSize(followList.size());
+
+        then(followRepository).should().findAllByFollower_LoginId(followerLoginId);
+    }
+
+    @DisplayName("팔로우한 사용자가 없으면 빈 목록 반환")
+    @Test
+    void returnEmptySet_IfNoFolloweesExist() {
+        //Given
+        String loginId = "follower";
+
+        given(followRepository.findAllByFollower_LoginId(loginId)).willReturn(List.of());
+
+        //When
+        Set<String> result = followService.getFolloweeLoginIds(loginId);
+
+        //Then
+        assertThat(result).isNotNull().isEmpty();
+
+        then(followRepository).should().findAllByFollower_LoginId(loginId);
     }
 }

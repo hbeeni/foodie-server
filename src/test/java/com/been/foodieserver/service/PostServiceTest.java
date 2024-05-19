@@ -19,11 +19,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -38,6 +41,9 @@ class PostServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private FollowService followService;
 
     @Mock
     private CategoryRepository categoryRepository;
@@ -174,6 +180,77 @@ class PostServiceTest {
 
         then(userService).should().isLoginIdExist(loginId);
         then(postRepository).shouldHaveNoInteractions();
+        then(categoryRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("팔로우한 유저의 게시글 목록 조회 요청이 유효하면 팔로우 유저 게시글 목록 조회 성공")
+    @Test
+    void getPostListByFollowees_IfRequestIsValid() {
+        //Given
+        String loginId = "follower";
+        String followeeLoginId1 = "followee1";
+        String followeeLoginId2 = "followee2";
+        Set<String> followeeLoginIdSet = Set.of(followeeLoginId1, followeeLoginId2);
+
+        Post post1 = PostFixture.get(1L, "title", followeeLoginId1, "자유 게시판");
+        Post post2 = PostFixture.get(2L, "title", followeeLoginId1, "자유 게시판");
+        Post post3 = PostFixture.get(3L, "title", followeeLoginId1, "자유 게시판");
+        Post post4 = PostFixture.get(4L, "title", followeeLoginId2, "자유 게시판");
+
+        List<Post> content = List.of(post4, post3, post2, post1);
+        Page<Post> postPage = new PageImpl<>(content);
+
+        int pageNum = 1;
+        int pageSize = content.size();
+
+        given(followService.getFolloweeLoginIds(loginId)).willReturn(followeeLoginIdSet);
+        given(postRepository.findAllByUser_LoginIdIn(any(Pageable.class), eq(followeeLoginIdSet))).willReturn(postPage);
+
+        //When
+        Page<PostResponse> result = postService.getPostsByFollowees(loginId, pageNum, pageSize);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(content.size());
+        assertThat(result.getNumber() + 1).isEqualTo(pageNum);
+        assertThat(result.getSize()).isEqualTo(pageSize);
+        assertThat(result.getContent().get(0).getPostId()).isEqualTo(post4.getId());
+
+        then(followService).should().getFolloweeLoginIds(loginId);
+        then(postRepository).should().findAllByUser_LoginIdIn(any(Pageable.class), eq(followeeLoginIdSet));
+        then(userService).shouldHaveNoInteractions();
+        then(categoryRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("팔로우한 유저가 없으면 빈 게시글 목록 반환")
+    @Test
+    void returnEmptyPostList_IfNoFolloweesExist() {
+        //Given
+        String loginId = "follower";
+        int pageNum = 1;
+        int pageSize = 10;
+
+        Set<String> emptySet = Set.of();
+        List<Post> content = List.of();
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+        Page<Post> page = new PageImpl<>(content, pageable, 0L);
+
+        given(followService.getFolloweeLoginIds(loginId)).willReturn(emptySet);
+        given(postRepository.findAllByUser_LoginIdIn(pageable, emptySet)).willReturn(page);
+
+        //When
+        Page<PostResponse> result = postService.getPostsByFollowees(loginId, pageNum, pageSize);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isZero();
+        assertThat(result.getNumber() + 1).isEqualTo(pageNum);
+        assertThat(result.getSize()).isEqualTo(pageSize);
+        assertThat(result.getContent()).isEmpty();
+
+        then(followService).should().getFolloweeLoginIds(loginId);
+        then(postRepository).should().findAllByUser_LoginIdIn(pageable, emptySet);
+        then(userService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
