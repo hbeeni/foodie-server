@@ -41,12 +41,12 @@ public class UserController {
 
     @GetMapping("/id/exists")
     public ResponseEntity<ApiResponse<Boolean>> checkLoginId(@RequestParam("loginId") String loginId) {
-        return ResponseEntity.ok(ApiResponse.success(userService.isLoginIdDuplicated(loginId)));
+        return ResponseEntity.ok(ApiResponse.success(userService.isLoginIdExist(loginId)));
     }
 
     @GetMapping("/nickname/exists")
     public ResponseEntity<ApiResponse<Boolean>> checkNickname(@RequestParam("nickname") String nickname) {
-        return ResponseEntity.ok(ApiResponse.success(userService.isNicknameDuplicated(nickname)));
+        return ResponseEntity.ok(ApiResponse.success(userService.isNicknameExist(nickname)));
     }
 
     @GetMapping("/my")

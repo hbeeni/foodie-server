@@ -46,6 +46,13 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.success(postService.getMyPostList(userDetails.getUsername(), pageNum, pageSize)));
     }
 
+    @GetMapping("/users/{loginId}")
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getPostListByUser(@PathVariable("loginId") String writerLoginId,
+                                                                             @RequestParam(value = "pageNum", defaultValue = "1") @Min(1) int pageNum,
+                                                                             @RequestParam(value = "pageSize", defaultValue = "10") @Min(1) int pageSize) {
+        return ResponseEntity.ok(ApiResponse.success(postService.getPostListByUserLoginId(writerLoginId, pageNum, pageSize)));
+    }
+
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable("postId") Long postId) {
         return ResponseEntity.ok(ApiResponse.success(postService.getPost(postId)));
