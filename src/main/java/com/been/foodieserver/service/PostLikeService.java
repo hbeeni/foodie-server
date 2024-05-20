@@ -38,6 +38,14 @@ public class PostLikeService {
         return LikeResponse.of(loginId, postId);
     }
 
+    public void unlike(String loginId, Long postId) {
+        int resultCount = likeRepository.deleteByUserLoginIdAndPostId(loginId, postId);
+
+        if (resultCount == 0) {
+            throw new CustomException(ErrorCode.LIKE_NOT_FOUND);
+        }
+    }
+
     private boolean hasUserLikedPost(String loginId, Long postId) {
         return likeRepository.existsByUser_LoginIdAndPost_Id(loginId, postId);
     }

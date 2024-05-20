@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PostLikeServiceTest {
@@ -140,5 +141,38 @@ class PostLikeServiceTest {
         then(likeRepository).should().existsByUser_LoginIdAndPost_Id(loginId, postId);
         then(postService).should().getPostWithFetchJoinOrException(postId);
         then(userService).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("좋아요 취소 요청이 유효하면 게시글 좋아요 취소 성공")
+    @Test
+    void unlikePost_IfRequestIsValid() {
+        //Given
+        long postId = post.getId();
+        String loginId = likingUser.getLoginId();
+
+        when(likeRepository.deleteByUserLoginIdAndPostId(loginId, postId)).thenReturn(1);
+
+        //When
+        postLikeService.unlike(loginId, postId);
+
+        //Then
+        then(likeRepository).should().deleteByUserLoginIdAndPostId(loginId, postId);
+    }
+
+    @DisplayName("취소하려는 좋아요가 존재하지 않으면 예외 발생")
+    @Test
+    void throwsException_IfLikeNotFound() {
+        //Given
+        long postId = post.getId();
+        String loginId = likingUser.getLoginId();
+
+        when(likeRepository.deleteByUserLoginIdAndPostId(loginId, postId)).thenReturn(0);
+
+        //When & Then
+        assertThatThrownBy(() -> postLikeService.unlike(loginId, postId))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.LIKE_NOT_FOUND.getMessage());
+
+        then(likeRepository).should().deleteByUserLoginIdAndPostId(loginId, postId);
     }
 }

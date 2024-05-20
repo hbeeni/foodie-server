@@ -24,6 +24,7 @@ public enum ErrorCode {
 
     LIKE_OWN_POST(HttpStatus.BAD_REQUEST, "자신의 게시글은 좋아요할 수 없습니다."),
     ALREADY_LIKED(HttpStatus.BAD_REQUEST, "이미 좋아요한 게시글입니다."),
+    LIKE_NOT_FOUND(HttpStatus.BAD_REQUEST, "좋아요 정보를 찾을 수 없습니다."),
 
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "internal server error");
 
