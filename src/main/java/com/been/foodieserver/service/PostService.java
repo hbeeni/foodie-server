@@ -60,8 +60,7 @@ public class PostService {
     }
 
     public PostResponse getPost(Long postId) {
-        Post post = postRepository.findWithFetchJoinById(postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+        Post post = getPostWithFetchJoinOrException(postId);
         return PostResponse.of(post);
     }
 
@@ -97,6 +96,11 @@ public class PostService {
 
     private static PageRequest makePageable(int pageNum, int pageSize) {
         return PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+    }
+
+    public Post getPostWithFetchJoinOrException(Long postId) {
+        return postRepository.findWithFetchJoinById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
     }
 
     private Post getPostWithFetchJoinByUserOrException(Long postId, String loginId) {
