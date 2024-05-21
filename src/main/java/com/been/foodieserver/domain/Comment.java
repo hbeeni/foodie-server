@@ -39,10 +39,6 @@ public class Comment extends BaseTimeEntity {
     @Column(nullable = false, length = 500)
     private String content;
 
-    public void modify(String content) {
-        this.content = content;
-    }
-
     protected Comment() {
     }
 
@@ -54,6 +50,14 @@ public class Comment extends BaseTimeEntity {
 
     public static Comment of(Post post, User user, String content) {
         return new Comment(post, user, content);
+    }
+
+    public void modify(String content) {
+        this.content = content;
+    }
+
+    public void delete() {
+        setDeletedAtNow();
     }
 
     @Override

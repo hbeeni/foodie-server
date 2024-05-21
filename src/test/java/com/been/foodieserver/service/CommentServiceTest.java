@@ -165,4 +165,70 @@ class CommentServiceTest {
         then(commentRepository).should().findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId());
         then(userService).shouldHaveNoInteractions();
     }
+
+    @DisplayName("댓글 삭제 요청이 유효하면 댓글 삭제 성공")
+    @Test
+    void deleteComment_IfRequestIsValid() {
+        //Given
+        given(postRepository.existsById(post.getId())).willReturn(true);
+        given(commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId()))
+                .willReturn(Optional.of(comment));
+
+        //When
+        CommentResponse result = commentService.deleteComment(user.getLoginId(), post.getId(), comment.getId());
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isEqualTo(comment.getContent());
+        assertThat(result.getPostId()).isEqualTo(post.getId());
+        assertThat(result.getCategoryName()).isEqualTo(post.getCategory().getName());
+        assertThat(result.getWriter().getLoginId()).isEqualTo(user.getLoginId());
+        assertThat(result.getDeletedAt()).isNotNull();
+
+        then(postRepository).should().existsById(post.getId());
+        then(commentRepository).should().findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId());
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("댓글 삭제 시 게시글이 존재하지 않으면 예외 발생")
+    @Test
+    void throwsException_IfPostDoesntExist_WhenDeletingComment() {
+        //Given
+        String loginId = user.getLoginId();
+        Long postId = post.getId();
+        Long commentId = comment.getId();
+
+        given(postRepository.existsById(post.getId())).willReturn(false);
+
+        //When & Then
+        assertThatThrownBy(() -> commentService.deleteComment(loginId, postId, commentId))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
+
+        then(postRepository).should().existsById(post.getId());
+        then(userService).shouldHaveNoInteractions();
+        then(commentRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("댓글 삭제 시 삭제할 댓글이 존재하지 않으면 예외 발생")
+    @Test
+    void throwsException_IfCommentDoesntExist_WhenDeletingComment() {
+        //Given
+        String loginId = user.getLoginId();
+        Long postId = post.getId();
+        Long commentId = comment.getId();
+
+        given(postRepository.existsById(post.getId())).willReturn(true);
+        given(commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId()))
+                .willReturn(Optional.empty());
+
+        //When & Then
+        assertThatThrownBy(() -> commentService.deleteComment(loginId, postId, commentId))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.COMMENT_NOT_FOUND.getMessage());
+
+        then(postRepository).should().existsById(post.getId());
+        then(commentRepository).should().findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId());
+        then(userService).shouldHaveNoInteractions();
+    }
 }

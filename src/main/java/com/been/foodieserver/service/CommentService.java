@@ -49,4 +49,19 @@ public class CommentService {
 
         return CommentResponse.of(comment);
     }
+
+    public CommentResponse deleteComment(String loginId, Long postId, Long commentId) {
+        if (!postRepository.existsById(postId)) {
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
+        }
+
+        Comment comment = commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(commentId, loginId, postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
+
+        comment.delete();
+
+        commentRepository.flush();
+
+        return CommentResponse.of(comment);
+    }
 }
