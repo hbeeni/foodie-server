@@ -21,6 +21,7 @@ public class PostResponse {
     private String title;
     private String content;
     private int likeCount;
+    private int commentCount;
     private Timestamp createdAt;
     private Timestamp modifiedAt;
     private Timestamp deletedAt;
@@ -36,6 +37,7 @@ public class PostResponse {
                 post.getTitle(),
                 post.getContent(),
                 post.getLikes().size(),
+                post.getComments().size(),
                 post.getCreatedAt(),
                 post.getModifiedAt(),
                 post.getDeletedAt());

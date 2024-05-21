@@ -1,6 +1,5 @@
 package com.been.foodieserver.repository;
 
-import com.been.foodieserver.domain.Like;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.dto.PostSearchDto;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -16,11 +15,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static com.been.foodieserver.domain.QCategory.category;
-import static com.been.foodieserver.domain.QLike.like;
 import static com.been.foodieserver.domain.QPost.post;
 import static com.been.foodieserver.domain.QUser.user;
 
@@ -46,8 +42,6 @@ public class PostQueryRepository {
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        setLikes(content);
-
         JPAQuery<Long> countQuery = queryFactory
                 .select(post.count())
                 .from(post)
@@ -59,28 +53,6 @@ public class PostQueryRepository {
                 );
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
-    }
-
-    private void setLikes(List<Post> posts) {
-        Map<Long, List<Like>> postIdToLikeMap = findPostIdToLikeMap(toPostIds(posts));
-        posts.forEach(p -> p.setLikes(postIdToLikeMap.getOrDefault(p.getId(), List.of())));
-    }
-
-    private List<Long> toPostIds(List<Post> posts) {
-        return posts.stream()
-                .map(Post::getId)
-                .toList();
-    }
-
-    private Map<Long, List<Like>> findPostIdToLikeMap(List<Long> postIds) {
-        List<Like> likes = queryFactory
-                .selectFrom(like)
-                .join(like.post, post)
-                .where(like.post.id.in(postIds))
-                .fetch();
-
-        return likes.stream()
-                .collect(Collectors.groupingBy(like -> like.getPost().getId()));
     }
 
     private BooleanExpression writerLoginIdContainsIgnoreCase(String writerLoginId) {
