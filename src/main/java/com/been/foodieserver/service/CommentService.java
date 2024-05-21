@@ -11,6 +11,10 @@ import com.been.foodieserver.repository.CommentRepository;
 import com.been.foodieserver.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +28,14 @@ public class CommentService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
 
+    public Page<CommentResponse> getCommentList(Long postId, int pageNum, int pageSize) {
+        validatePostExistsById(postId);
+
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+
+        return commentRepository.findAllWithUserAndPostAndCategoryByPostId(pageable, postId).map(CommentResponse::of);
+    }
+
     public CommentResponse writeComment(String loginId, Long postId, CommentDto dto) {
         Post post = postRepository.findWithFetchJoinById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
@@ -36,9 +48,7 @@ public class CommentService {
     }
 
     public CommentResponse modifyComment(String loginId, Long postId, Long commentId, CommentDto dto) {
-        if (!postRepository.existsById(postId)) {
-            throw new CustomException(ErrorCode.POST_NOT_FOUND);
-        }
+        validatePostExistsById(postId);
 
         Comment comment = commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(commentId, loginId, postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
@@ -51,9 +61,7 @@ public class CommentService {
     }
 
     public CommentResponse deleteComment(String loginId, Long postId, Long commentId) {
-        if (!postRepository.existsById(postId)) {
-            throw new CustomException(ErrorCode.POST_NOT_FOUND);
-        }
+        validatePostExistsById(postId);
 
         Comment comment = commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(commentId, loginId, postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
@@ -63,5 +71,11 @@ public class CommentService {
         commentRepository.flush();
 
         return CommentResponse.of(comment);
+    }
+
+    private void validatePostExistsById(Long postId) {
+        if (!postRepository.existsById(postId)) {
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
+        }
     }
 }

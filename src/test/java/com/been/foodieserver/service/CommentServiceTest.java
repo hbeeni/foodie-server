@@ -19,12 +19,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -56,6 +61,57 @@ class CommentServiceTest {
         commentDto = CommentDto.builder()
                 .content(comment.getContent())
                 .build();
+    }
+
+    @DisplayName("댓글 목록 요청이 유효하면 댓글 목록 조회 성공")
+    @Test
+    void getCommentList_IfRequestIsValid() {
+        //Given
+        Long postId = post.getId();
+
+        Comment comment2 = CommentFixture.get(user, post, 2L, "comment content2");
+
+        List<Comment> content = List.of(comment2, comment);
+        Page<Comment> commentPage = new PageImpl<>(content);
+
+        int pageNum = 1;
+        int pageSize = content.size();
+
+        given(postRepository.existsById(postId)).willReturn(true);
+        given(commentRepository.findAllWithUserAndPostAndCategoryByPostId(any(Pageable.class), eq(postId))).willReturn(commentPage);
+
+        //When
+        Page<CommentResponse> result = commentService.getCommentList(postId, pageNum, pageSize);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(content.size());
+        assertThat(result.getNumber() + 1).isEqualTo(pageNum);
+        assertThat(result.getSize()).isEqualTo(pageSize);
+        assertThat(result.getContent().get(0).getCommentId()).isEqualTo(comment2.getId());
+
+        then(postRepository).should().existsById(postId);
+        then(commentRepository).should().findAllWithUserAndPostAndCategoryByPostId(any(Pageable.class), eq(postId));
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("댓글 목록 조회 시 게시글이 존재하지 않으면 예외 발생")
+    @Test
+    void throwsException_IfPostDoesntExist_WhenGettingCommentList() {
+        //Given
+        Long postId = post.getId();
+
+        given(postRepository.existsById(postId)).willReturn(false);
+
+        //When
+        assertThatThrownBy(() -> commentService.getCommentList(postId, 1, 10))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
+
+        //Then
+        then(postRepository).should().existsById(postId);
+        then(userService).shouldHaveNoInteractions();
+        then(commentRepository).shouldHaveNoInteractions();
     }
 
     @DisplayName("댓글 요청이 유효하면 댓글 작성 성공")
