@@ -21,6 +21,7 @@ public enum ErrorCode {
 
     CATEGORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "카테고리를 찾을 수 없습니다."),
     POST_NOT_FOUND(HttpStatus.BAD_REQUEST, "게시글을 찾을 수 없습니다."),
+    COMMENT_NOT_FOUND(HttpStatus.BAD_REQUEST, "댓글을 찾을 수 없습니다."),
 
     LIKE_OWN_POST(HttpStatus.BAD_REQUEST, "자신의 게시글은 좋아요할 수 없습니다."),
     ALREADY_LIKED(HttpStatus.BAD_REQUEST, "이미 좋아요한 게시글입니다."),

@@ -39,6 +39,10 @@ public class Comment extends BaseTimeEntity {
     @Column(nullable = false, length = 500)
     private String content;
 
+    public void modify(String content) {
+        this.content = content;
+    }
+
     protected Comment() {
     }
 

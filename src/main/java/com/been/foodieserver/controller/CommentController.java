@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,5 +29,13 @@ public class CommentController {
                                                                      @PathVariable("postId") @Positive(message = "postId는 0보다 커야 합니다.") Long postId,
                                                                      @RequestBody @Valid CommentRequest request) {
         return ResponseEntity.ok(ApiResponse.success(commentService.writeComment(userDetails.getUsername(), postId, request.toDto())));
+    }
+
+    @PutMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<CommentResponse>> modifyComment(@AuthenticationPrincipal UserDetails userDetails,
+                                                                      @PathVariable("postId") @Positive(message = "postId는 0보다 커야 합니다.") Long postId,
+                                                                      @PathVariable("commentId") @Positive(message = "commentId는 0보다 커야 합니다.") Long commentId,
+                                                                      @RequestBody @Valid CommentRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(commentService.modifyComment(userDetails.getUsername(), postId, commentId, request.toDto())));
     }
 }

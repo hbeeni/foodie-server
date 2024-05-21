@@ -34,4 +34,19 @@ public class CommentService {
 
         return CommentResponse.of(savedComment);
     }
+
+    public CommentResponse modifyComment(String loginId, Long postId, Long commentId, CommentDto dto) {
+        if (!postRepository.existsById(postId)) {
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
+        }
+
+        Comment comment = commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(commentId, loginId, postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
+
+        comment.modify(dto.getContent());
+
+        commentRepository.flush();
+
+        return CommentResponse.of(comment);
+    }
 }

@@ -100,4 +100,69 @@ class CommentServiceTest {
         then(userService).shouldHaveNoInteractions();
         then(commentRepository).shouldHaveNoInteractions();
     }
+
+    @DisplayName("댓글 수정 요청이 유효하면 게시글 수정 성공")
+    @Test
+    void modifyComment_IfRequestIsValid() {
+        //Given
+        given(postRepository.existsById(post.getId())).willReturn(true);
+        given(commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId()))
+                .willReturn(Optional.of(comment));
+
+        //When
+        CommentResponse result = commentService.modifyComment(user.getLoginId(), post.getId(), comment.getId(), commentDto);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getContent()).isEqualTo(comment.getContent());
+        assertThat(result.getPostId()).isEqualTo(post.getId());
+        assertThat(result.getCategoryName()).isEqualTo(post.getCategory().getName());
+        assertThat(result.getWriter().getLoginId()).isEqualTo(user.getLoginId());
+
+        then(postRepository).should().existsById(post.getId());
+        then(commentRepository).should().findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId());
+        then(userService).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("댓글 수정 시 게시글이 존재하지 않으면 예외 발생")
+    @Test
+    void throwsException_IfPostDoesntExist_WhenModifyingComment() {
+        //Given
+        String loginId = user.getLoginId();
+        Long postId = post.getId();
+        Long commentId = comment.getId();
+
+        given(postRepository.existsById(post.getId())).willReturn(false);
+
+        //When & Then
+        assertThatThrownBy(() -> commentService.modifyComment(loginId, postId, commentId, commentDto))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
+
+        then(postRepository).should().existsById(post.getId());
+        then(userService).shouldHaveNoInteractions();
+        then(commentRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("댓글 수정 시 수정할 댓글이 존재하지 않으면 예외 발생")
+    @Test
+    void throwsException_IfCommentDoesntExist_WhenModifyingComment() {
+        //Given
+        String loginId = user.getLoginId();
+        Long postId = post.getId();
+        Long commentId = comment.getId();
+
+        given(postRepository.existsById(post.getId())).willReturn(true);
+        given(commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId()))
+                .willReturn(Optional.empty());
+
+        //When & Then
+        assertThatThrownBy(() -> commentService.modifyComment(loginId, postId, commentId, commentDto))
+                .isInstanceOf(CustomException.class)
+                .hasMessage(ErrorCode.COMMENT_NOT_FOUND.getMessage());
+
+        then(postRepository).should().existsById(post.getId());
+        then(commentRepository).should().findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId());
+        then(userService).shouldHaveNoInteractions();
+    }
 }
