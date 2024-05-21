@@ -70,7 +70,7 @@ public class Post extends BaseTimeEntity {
     }
 
     public void delete() {
-        setDeletedAt();
+        setDeletedAtNow();
     }
 
     @Override

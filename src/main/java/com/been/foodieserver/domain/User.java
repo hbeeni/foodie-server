@@ -61,7 +61,7 @@ public class User extends BaseTimeEntity {
     }
 
     public void withdraw() {
-        setDeletedAt();
+        setDeletedAtNow();
     }
 
     @Override
