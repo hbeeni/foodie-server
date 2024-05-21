@@ -58,7 +58,7 @@ class CommentServiceTest {
                 .build();
     }
 
-    @DisplayName("댓글 요청이 유효하면 게시글 작성 성공")
+    @DisplayName("댓글 요청이 유효하면 댓글 작성 성공")
     @Test
     void writeComment_IfRequestIsValid() {
         //Given
@@ -101,7 +101,7 @@ class CommentServiceTest {
         then(commentRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("댓글 수정 요청이 유효하면 게시글 수정 성공")
+    @DisplayName("댓글 수정 요청이 유효하면 댓글 수정 성공")
     @Test
     void modifyComment_IfRequestIsValid() {
         //Given
