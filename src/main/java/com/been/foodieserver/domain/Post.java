@@ -45,9 +45,11 @@ public class Post extends BaseTimeEntity {
     @Column(nullable = false, length = 10000)
     private String content;
 
-    @Setter
     @OneToMany(mappedBy = "post")
     private List<Like> likes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "post")
+    private List<Comment> comments = new ArrayList<>();
 
     protected Post() {
     }
@@ -70,7 +72,7 @@ public class Post extends BaseTimeEntity {
     }
 
     public void delete() {
-        setDeletedAt();
+        setDeletedAtNow();
     }
 
     @Override

@@ -22,7 +22,7 @@ public abstract class BaseTimeEntity extends BaseCreatedAtEntity {
 
     private Timestamp deletedAt;
 
-    public void setDeletedAt() {
+    public void setDeletedAtNow() {
         this.deletedAt = new Timestamp(System.currentTimeMillis());
     }
 }

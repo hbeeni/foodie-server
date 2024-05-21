@@ -52,6 +52,14 @@ public class Comment extends BaseTimeEntity {
         return new Comment(post, user, content);
     }
 
+    public void modify(String content) {
+        this.content = content;
+    }
+
+    public void delete() {
+        setDeletedAtNow();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
