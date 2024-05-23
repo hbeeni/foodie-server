@@ -11,6 +11,8 @@ import java.util.Set;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
+    int countByUser_LoginId(String loginId);
+
     @EntityGraph(attributePaths = {"user", "category"})
     Page<Post> findAll(Pageable pageable);
 

@@ -5,6 +5,7 @@ import com.been.foodieserver.dto.request.UserPasswordChangeRequest;
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.dto.response.UserInfoResponse;
+import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse;
 import com.been.foodieserver.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,12 +51,12 @@ public class UserController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<UserInfoResponse>> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<UserInfoWithStatisticsResponse>> getMyInfo(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(ApiResponse.success(userService.getMyInfo(userDetails.getUsername())));
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse<UserInfoResponse>> getUserInfo(@PathVariable("userId") String userId) {
+    public ResponseEntity<ApiResponse<UserInfoWithStatisticsResponse>> getUserInfo(@PathVariable("userId") String userId) {
         return ResponseEntity.ok(ApiResponse.success(userService.getUserInfo(userId)));
     }
 
@@ -65,8 +66,8 @@ public class UserController {
     }
 
     @PutMapping("/my/password")
-    public ResponseEntity<ApiResponse<UserInfoResponse>> changePassword(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
-                                                                        @AuthenticationPrincipal UserDetails userDetails, @RequestBody @Valid UserPasswordChangeRequest request) {
+    public ResponseEntity<ApiResponse<Void>> changePassword(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
+                                                            @AuthenticationPrincipal UserDetails userDetails, @RequestBody @Valid UserPasswordChangeRequest request) {
         userService.changePassword(userDetails.getUsername(), request.getCurrentPassword(), request.getNewPassword(), request.getConfirmNewPassword());
         forceLogout(servletRequest, servletResponse);
         return ResponseEntity.ok(ApiResponse.success());

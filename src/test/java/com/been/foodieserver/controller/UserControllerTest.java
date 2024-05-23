@@ -9,6 +9,8 @@ import com.been.foodieserver.dto.request.UserPasswordChangeRequest;
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.dto.response.UserInfoResponse;
+import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse;
+import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse.UserStatistics;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.service.UserService;
@@ -211,10 +213,11 @@ class UserControllerTest {
         //Given
         String loginId = "user1";
         User user = User.of(loginId, null, "nickname", Role.USER);
+        UserStatistics userStatistics = UserStatistics.of(1, 1, 1);
 
-        UserInfoResponse userInfoResponse = UserInfoResponse.my(user);
+        UserInfoWithStatisticsResponse userInfoWithStatisticsResponse = UserInfoWithStatisticsResponse.my(user, userStatistics);
 
-        given(userService.getMyInfo(loginId)).willReturn(userInfoResponse);
+        given(userService.getMyInfo(loginId)).willReturn(userInfoWithStatisticsResponse);
 
         //When & Then
         mockMvc.perform(get(myInfoApi)
@@ -227,7 +230,9 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.data.loginId").value(user.getLoginId()))
                 .andExpect(jsonPath("$.data.nickname").value(user.getNickname()))
                 .andExpect(jsonPath("$.data.role").value(user.getRole().getRoleName()))
-                .andExpect(jsonPath("$.data.loginId").value(loginId));
+                .andExpect(jsonPath("$.data.loginId").value(loginId))
+                .andExpect(jsonPath("$.data.statistics").exists())
+                .andExpect(jsonPath("$.data.statistics.followingCount").value(userStatistics.getFollowingCount()));
 
         then(userService).should().getMyInfo(loginId);
     }
@@ -255,10 +260,11 @@ class UserControllerTest {
         //Given
         String loginId = "others";
         User user = User.of(loginId, null, "nickname", Role.USER);
+        UserStatistics userStatistics = UserStatistics.of(1, 1, 1);
 
-        UserInfoResponse userInfoResponse = UserInfoResponse.others(user);
+        UserInfoWithStatisticsResponse userInfoWithStatisticsResponse = UserInfoWithStatisticsResponse.others(user, userStatistics);
 
-        given(userService.getUserInfo(loginId)).willReturn(userInfoResponse);
+        given(userService.getUserInfo(loginId)).willReturn(userInfoWithStatisticsResponse);
 
         //When & Then
         mockMvc.perform(get(userApi + "/" + user.getLoginId())
@@ -271,7 +277,9 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.data.role").doesNotExist())
                 .andExpect(jsonPath("$.data.createdAt").doesNotExist())
                 .andExpect(jsonPath("$.data.modifiedAt").doesNotExist())
-                .andExpect(jsonPath("$.data.deletedAt").doesNotExist());
+                .andExpect(jsonPath("$.data.deletedAt").doesNotExist())
+                .andExpect(jsonPath("$.data.statistics").exists())
+                .andExpect(jsonPath("$.data.statistics.followingCount").value(userStatistics.getFollowingCount()));
 
         then(userService).should().getUserInfo(loginId);
     }

@@ -19,6 +19,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByLoginId(String loginId);
 
+    @Query(nativeQuery = true, value = "select u.id from users u where u.deleted_at <= :deletedAt")
+    List<Long> findAllByDeletedAtBefore(@Param("deletedAt") Timestamp deletedAt);
+
     @Modifying
     @Query(nativeQuery = true, value = "delete from users u where u.deleted_at <= :deletedAt")
     int deleteAllByDeletedAtBefore(@Param("deletedAt") Timestamp deletedAt);

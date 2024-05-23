@@ -14,6 +14,16 @@ public interface FollowRepository extends JpaRepository<Follow, Long> {
     @EntityGraph(attributePaths = {"follower", "followee"})
     List<Follow> findAllByFollower_LoginId(String loginId);
 
+    /**
+     * 유저가 팔로우한 사람 수 조회
+     */
+    int countByFollower_LoginId(String loginId);
+
+    /**
+     * 유저를 팔로우한 사람 수 조회
+     */
+    int countByFollowee_LoginId(String loginId);
+
     boolean existsByFollower_LoginIdAndFollowee_LoginId(String followerLoginId, String followeeLoginId);
 
     void deleteByFollower_LoginIdAndFollowee_LoginId(String followerLoginId, String followeeLoginId);
