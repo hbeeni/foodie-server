@@ -34,23 +34,24 @@ class UserServiceSchedulerTest {
         User user2 = User.of("user2", "pwd", "nick2", Role.USER);
         User user3 = User.of("user3", "pwd", "nick3", Role.USER);
         User user4 = User.of("user4", "pwd", "nick4", Role.USER);
+        User user5 = User.of("user5", "pwd", "nick5", Role.USER);
 
         ReflectionTestUtils.setField(user1, "deletedAt", Timestamp.valueOf(LocalDateTime.now().minusDays(29)));
         ReflectionTestUtils.setField(user2, "deletedAt", Timestamp.valueOf(LocalDateTime.now().minusDays(30)));
         ReflectionTestUtils.setField(user3, "deletedAt", Timestamp.valueOf(LocalDateTime.now().minusDays(31)));
         ReflectionTestUtils.setField(user4, "deletedAt", Timestamp.valueOf(LocalDateTime.now().minusDays(32)));
 
-        userRepository.saveAll(List.of(user1, user2, user3, user4));
+        userRepository.saveAll(List.of(user1, user2, user3, user4, user5));
     }
 
     @DisplayName("30일 전에 탈퇴한 회원을 DB에서 삭제")
     @Test
-    void schedule_DeleteUsersWithdrawn30DaysAgoFromDB() throws InterruptedException {
+    void schedule_DeleteUsersWithdrawn30DaysAgoFromDB() {
         Awaitility.await()
                 .atMost(2, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    List after = em.createNativeQuery("select * from users u", User.class).getResultList();
-                    assertThat(after).hasSize(1);
+                    long userCount = (long) em.createNativeQuery("select count(u.id) from users u").getSingleResult();
+                    assertThat(userCount).isEqualTo(2L);
                 });
     }
 }

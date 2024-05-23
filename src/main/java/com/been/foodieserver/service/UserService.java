@@ -4,8 +4,14 @@ import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.dto.response.UserInfoResponse;
+import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse;
+import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse.UserStatistics;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.repository.CommentRepository;
+import com.been.foodieserver.repository.FollowRepository;
+import com.been.foodieserver.repository.LikeRepository;
+import com.been.foodieserver.repository.PostRepository;
 import com.been.foodieserver.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -26,6 +33,10 @@ public class UserService {
 
     private final PasswordEncoder encoder;
     private final UserRepository userRepository;
+    private final FollowRepository followRepository;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
+    private final LikeRepository likeRepository;
 
     public void signUp(UserDto userDto) {
         if (isLoginIdExist(userDto.getLoginId())) {
@@ -56,12 +67,16 @@ public class UserService {
         return userRepository.findByLoginId(loginId).map(CustomUserDetails::from);
     }
 
-    public UserInfoResponse getMyInfo(String loginId) {
-        return UserInfoResponse.my(getUserOrException(loginId));
+    public UserInfoWithStatisticsResponse getMyInfo(String loginId) {
+        User user = getUserOrException(loginId);
+        UserStatistics userStatistics = getUserStatistics(loginId);
+        return UserInfoWithStatisticsResponse.my(user, userStatistics);
     }
 
-    public UserInfoResponse getUserInfo(String loginId) {
-        return UserInfoResponse.others(getUserOrException(loginId));
+    public UserInfoWithStatisticsResponse getUserInfo(String loginId) {
+        User user = getUserOrException(loginId);
+        UserStatistics userStatistics = getUserStatistics(loginId);
+        return UserInfoWithStatisticsResponse.others(user, userStatistics);
     }
 
     public UserInfoResponse modifyMyInfo(String loginId, UserDto userDto) {
@@ -105,12 +120,37 @@ public class UserService {
      */
     @Scheduled(cron = "${schedules.cron.user.delete}")
     public void deleteUsersInactiveFor30Days() {
-        log.info("execute UserService.deleteUsersInactiveFor30Days");
+        log.info("hard delete users");
 
         Timestamp thirtyDaysAgo = Timestamp.valueOf(LocalDateTime.now().minusDays(30));
-        int deletedCount = userRepository.deleteAllByDeletedAtBefore(thirtyDaysAgo);
+        List<Long> userLoginIdsToDelete = userRepository.findAllByDeletedAtBefore(thirtyDaysAgo);
+        List<Long> postIdsToDelete = postRepository.findAllByUserIdIn(userLoginIdsToDelete);
 
-        log.info("delete {} users", deletedCount);
+        likeRepository.deleteByUserIdIn(userLoginIdsToDelete);
+        likeRepository.deleteByPostIdIn(userLoginIdsToDelete);
+
+        commentRepository.hardDeleteByUserIdIn(userLoginIdsToDelete);
+        commentRepository.hardDeleteByPostIdIn(postIdsToDelete);
+
+        postRepository.hardDeleteByPostIdIn(postIdsToDelete);
+
+        followRepository.deleteByFollowerIdIn(userLoginIdsToDelete);
+        followRepository.deleteByFolloweeIdIn(userLoginIdsToDelete);
+
+        int deletedCount = userRepository.hardDeleteByIdIn(userLoginIdsToDelete);
+
+        if (userLoginIdsToDelete.size() != deletedCount) {
+            log.error("user deletion not successful. to be deleted: {}, deleted: {}", userLoginIdsToDelete.size(), deletedCount);
+        } else {
+            log.info("delete {} users", deletedCount);
+        }
+    }
+
+    private UserStatistics getUserStatistics(String loginId) {
+        int followingCount = followRepository.countByFollower_LoginId(loginId);
+        int followerCount = followRepository.countByFollowee_LoginId(loginId);
+        int postCount = postRepository.countByUser_LoginId(loginId);
+        return UserStatistics.of(followingCount, followerCount, postCount);
     }
 
     private boolean isCurrentPasswordCorrect(User user, String currentPassword) {

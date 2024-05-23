@@ -55,9 +55,9 @@ class UserRepositoryTest {
         assertThat(result).isFalse();
     }
 
-    @DisplayName("soft delete된 지 2일이 지난 User 삭제")
+    @DisplayName("soft delete된 지 2일이 지난 User 인덱스 반환")
     @Test
-    void deleteSoftDeletedUsersAfter2Days() {
+    void getIndexesOfUsersSoftDeletedMoreThan2DaysAgo() {
         //Given
         User user1 = User.of("user1", "pwd", "nick1", Role.USER);
         User user2 = User.of("user2", "pwd", "nick2", Role.USER);
@@ -72,11 +72,9 @@ class UserRepositoryTest {
         em.clear();
 
         //When
-        int deletedCount = userRepository.deleteAllByDeletedAtBefore(Timestamp.valueOf(LocalDateTime.now().minusDays(2)));
-        List result = em.createNativeQuery("select * from users u", User.class).getResultList();
+        List<Long> userIds = userRepository.findAllByDeletedAtBefore(Timestamp.valueOf(LocalDateTime.now().minusDays(2)));
 
         //Then
-        assertThat(deletedCount).isEqualTo(2);
-        assertThat(result).hasSize(1);
+        assertThat(userIds).hasSize(2);
     }
 }

@@ -5,8 +5,11 @@ import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.dto.response.UserInfoResponse;
+import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.repository.FollowRepository;
+import com.been.foodieserver.repository.PostRepository;
 import com.been.foodieserver.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +37,12 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private FollowRepository followRepository;
+
+    @Mock
+    private PostRepository postRepository;
 
     @Mock
     private PasswordEncoder encoder;
@@ -191,21 +200,29 @@ class UserServiceTest {
     void getMyInformation_ifLoginIdExists() {
         //Given
         String loginId = userDto.getLoginId();
+        int statisticsValue = 1;
 
         given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+        given(followRepository.countByFollower_LoginId(loginId)).willReturn(statisticsValue);
+        given(followRepository.countByFollowee_LoginId(loginId)).willReturn(statisticsValue);
+        given(postRepository.countByUser_LoginId(loginId)).willReturn(statisticsValue);
 
         //When
-        UserInfoResponse result = userService.getMyInfo(loginId);
+        UserInfoWithStatisticsResponse result = userService.getMyInfo(loginId);
 
         //Then
         assertThat(result).isNotNull();
-        assertThat(result.getLoginId()).isEqualTo(loginId);
-        assertThat(result.getNickname()).isEqualTo(user.getNickname());
-        assertThat(result.getRole()).isEqualTo(user.getRole().getRoleName());
-        assertThat(result.getCreatedAt()).isEqualTo(user.getCreatedAt());
-        assertThat(result.getModifiedAt()).isEqualTo(user.getModifiedAt());
+        assertThat(result.getInfo().getLoginId()).isEqualTo(loginId);
+        assertThat(result.getInfo().getNickname()).isEqualTo(user.getNickname());
+        assertThat(result.getInfo().getRole()).isEqualTo(user.getRole().getRoleName());
+        assertThat(result.getInfo().getCreatedAt()).isEqualTo(user.getCreatedAt());
+        assertThat(result.getInfo().getModifiedAt()).isEqualTo(user.getModifiedAt());
+        assertThat(result.getStatistics().getFollowingCount()).isEqualTo(statisticsValue);
 
         then(userRepository).should().findByLoginId(loginId);
+        then(followRepository).should().countByFollower_LoginId(loginId);
+        then(followRepository).should().countByFollowee_LoginId(loginId);
+        then(postRepository).should().countByUser_LoginId(loginId);
     }
 
     @DisplayName("아이디가 존재하지 않으면 내 정보 조회 실패")
@@ -222,6 +239,8 @@ class UserServiceTest {
                 .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
 
         then(userRepository).should().findByLoginId(loginId);
+        then(followRepository).shouldHaveNoInteractions();
+        then(postRepository).shouldHaveNoInteractions();
     }
 
     @DisplayName("아이디가 존재하면 다른 유저 정보 조회 성공")
@@ -229,22 +248,30 @@ class UserServiceTest {
     void getUserInformation_ifLoginIdExists() {
         //Given
         String loginId = userDto.getLoginId();
+        int statisticsValue = 1;
 
         given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+        given(followRepository.countByFollower_LoginId(loginId)).willReturn(statisticsValue);
+        given(followRepository.countByFollowee_LoginId(loginId)).willReturn(statisticsValue);
+        given(postRepository.countByUser_LoginId(loginId)).willReturn(statisticsValue);
 
         //When
-        UserInfoResponse result = userService.getUserInfo(loginId);
+        UserInfoWithStatisticsResponse result = userService.getUserInfo(loginId);
 
         //Then
         assertThat(result).isNotNull();
-        assertThat(result.getLoginId()).isEqualTo(loginId);
-        assertThat(result.getNickname()).isEqualTo(user.getNickname());
-        assertThat(result.getRole()).isNull();
-        assertThat(result.getCreatedAt()).isNull();
-        assertThat(result.getModifiedAt()).isNull();
-        assertThat(result.getDeletedAt()).isNull();
+        assertThat(result.getInfo().getLoginId()).isEqualTo(loginId);
+        assertThat(result.getInfo().getNickname()).isEqualTo(user.getNickname());
+        assertThat(result.getInfo().getRole()).isNull();
+        assertThat(result.getInfo().getCreatedAt()).isNull();
+        assertThat(result.getInfo().getModifiedAt()).isNull();
+        assertThat(result.getInfo().getDeletedAt()).isNull();
+        assertThat(result.getStatistics().getFollowingCount()).isEqualTo(statisticsValue);
 
         then(userRepository).should().findByLoginId(loginId);
+        then(followRepository).should().countByFollower_LoginId(loginId);
+        then(followRepository).should().countByFollowee_LoginId(loginId);
+        then(postRepository).should().countByUser_LoginId(loginId);
     }
 
     @DisplayName("아이디가 존재하지 않으면 다른 유저 정보 조회 실패")
@@ -261,6 +288,8 @@ class UserServiceTest {
                 .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
 
         then(userRepository).should().findByLoginId(loginId);
+        then(followRepository).shouldHaveNoInteractions();
+        then(postRepository).shouldHaveNoInteractions();
     }
 
     @DisplayName("닉네임 수정 시 다른 유저의 닉네임과 중복되지 않으면 변경함")
@@ -380,10 +409,12 @@ class UserServiceTest {
         willDoNothing().given(userRepository).flush();
 
         //When
-        userService.deleteUser(user.getLoginId());
+        UserInfoResponse result = userService.deleteUser(user.getLoginId());
 
         //Then
-        assertThat(user).hasFieldOrProperty("deletedAt");
+        assertThat(result).isNotNull();
+        assertThat(result.getNickname()).isEqualTo(userDto.getNickname());
+        assertThat(result.getDeletedAt()).isNotNull();
 
         then(userRepository).should().findByLoginId(user.getLoginId());
         then(userRepository).should().flush();
