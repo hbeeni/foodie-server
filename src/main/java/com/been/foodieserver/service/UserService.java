@@ -120,12 +120,30 @@ public class UserService {
      */
     @Scheduled(cron = "${schedules.cron.user.delete}")
     public void deleteUsersInactiveFor30Days() {
-        log.info("execute UserService.deleteUsersInactiveFor30Days");
+        log.info("hard delete users");
 
         Timestamp thirtyDaysAgo = Timestamp.valueOf(LocalDateTime.now().minusDays(30));
-        int deletedCount = userRepository.deleteAllByDeletedAtBefore(thirtyDaysAgo);
+        List<Long> userLoginIdsToDelete = userRepository.findAllByDeletedAtBefore(thirtyDaysAgo);
+        List<Long> postIdsToDelete = postRepository.findAllByUserIdIn(userLoginIdsToDelete);
 
-        log.info("delete {} users", deletedCount);
+        likeRepository.deleteByUserIdIn(userLoginIdsToDelete);
+        likeRepository.deleteByPostIdIn(userLoginIdsToDelete);
+
+        commentRepository.hardDeleteByUserIdIn(userLoginIdsToDelete);
+        commentRepository.hardDeleteByPostIdIn(postIdsToDelete);
+
+        postRepository.hardDeleteByPostIdIn(postIdsToDelete);
+
+        followRepository.deleteByFollowerIdIn(userLoginIdsToDelete);
+        followRepository.deleteByFolloweeIdIn(userLoginIdsToDelete);
+
+        int deletedCount = userRepository.hardDeleteByIdIn(userLoginIdsToDelete);
+
+        if (userLoginIdsToDelete.size() != deletedCount) {
+            log.error("user deletion not successful. to be deleted: {}, deleted: {}", userLoginIdsToDelete.size(), deletedCount);
+        } else {
+            log.info("delete {} users", deletedCount);
+        }
     }
 
     private UserStatistics getUserStatistics(String loginId) {

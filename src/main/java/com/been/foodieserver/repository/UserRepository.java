@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -23,6 +24,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<Long> findAllByDeletedAtBefore(@Param("deletedAt") Timestamp deletedAt);
 
     @Modifying
-    @Query(nativeQuery = true, value = "delete from users u where u.deleted_at <= :deletedAt")
-    int deleteAllByDeletedAtBefore(@Param("deletedAt") Timestamp deletedAt);
+    @Query(nativeQuery = true, value = "delete from users u where u.id in :userIds")
+    int hardDeleteByIdIn(@Param("userIds") List<Long> userIds);
 }
