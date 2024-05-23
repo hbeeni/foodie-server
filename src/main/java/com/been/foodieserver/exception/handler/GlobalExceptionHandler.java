@@ -4,55 +4,67 @@ package com.been.foodieserver.exception.handler;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.validation.BindException;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
 @RestControllerAdvice(annotations = RestController.class)
 public class GlobalExceptionHandler {
 
-    /**
-     * RequestParam으로  설정한 파라미터가 입력되지 않았을 경우 발생하는 예외를 처리한다.
-     */
-    @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ApiResponse<Object>> missingParameter(MissingServletRequestParameterException ex) {
-        printLog(ex);
+    @ExceptionHandler({ConstraintViolationException.class, TypeMismatchException.class, HttpMessageConversionException.class})
+    public ResponseEntity<ApiResponse<Void>> handleWebException(Exception ex) {
         return ResponseEntity.badRequest().body(ApiResponse.fail(ex));
     }
 
-    /**
-     * RequestBody로 설정한 객체의 유효성 검증이 실패할 때 발생하는 예외를 처리한다.
-     */
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>> validationFail(MethodArgumentNotValidException ex) {
-        printLog(ex);
-        return ResponseEntity.badRequest().body(ApiResponse.fail(ex.getBindingResult()));
+    @ExceptionHandler(ServletRequestBindingException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleServletRequestBindingException(ServletRequestBindingException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.fail(ex.getBody().getDetail()));
+    }
+
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHandlerMethodValidationException(HandlerMethodValidationException ex) {
+        String errorMessage = ex.getAllValidationResults().get(0).getResolvableErrors().get(0).getDefaultMessage();
+        return ResponseEntity.badRequest().body(ApiResponse.fail(errorMessage));
+    }
+
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleBindException(BindException ex) {
+        Map<String, String> errorMap = new HashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(b -> errorMap.put(b.getField(), b.getDefaultMessage()));
+
+        return ResponseEntity.badRequest().body(ApiResponse.fail("field errors", errorMap));
     }
 
     /**
-     * 비즈니스 예외를 처리한다.
+     * 비즈니스 예외
      */
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<ApiResponse<Object>> handleCustomException(CustomException ex) {
-        printLog(ex);
+    public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException ex) {
         return ResponseEntity.status(ex.getStatus()).body(ApiResponse.fail(ex));
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
-        printLog(ex);
-        return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
-                .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ApiResponse<Void>> handleResponseStatusException(ResponseStatusException ex) {
+        return ResponseEntity.status(ex.getStatusCode()).body(ApiResponse.fail(ex.getMessage()));
     }
 
-    private static void printLog(Exception ex) {
-        log.error("Error occurs! {}", ex.getMessage());
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleException() {
+        return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
+                .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }
 }
