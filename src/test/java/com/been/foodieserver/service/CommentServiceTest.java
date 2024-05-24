@@ -227,22 +227,15 @@ class CommentServiceTest {
     void deleteComment_IfRequestIsValid() {
         //Given
         given(postRepository.existsById(post.getId())).willReturn(true);
-        given(commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId()))
-                .willReturn(Optional.of(comment));
+        given(commentRepository.deleteByIdAndPostIdAndUserLoginId(comment.getId(), post.getId(), user.getLoginId()))
+                .willReturn(1);
 
         //When
-        CommentResponse result = commentService.deleteComment(user.getLoginId(), post.getId(), comment.getId());
+        commentService.deleteComment(user.getLoginId(), post.getId(), comment.getId());
 
         //Then
-        assertThat(result).isNotNull();
-        assertThat(result.getContent()).isEqualTo(comment.getContent());
-        assertThat(result.getPostId()).isEqualTo(post.getId());
-        assertThat(result.getCategoryName()).isEqualTo(post.getCategory().getName());
-        assertThat(result.getWriter().getLoginId()).isEqualTo(user.getLoginId());
-        assertThat(result.getDeletedAt()).isNotNull();
-
         then(postRepository).should().existsById(post.getId());
-        then(commentRepository).should().findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId());
+        then(commentRepository).should().deleteByIdAndPostIdAndUserLoginId(comment.getId(), post.getId(), user.getLoginId());
         then(userService).shouldHaveNoInteractions();
     }
 
@@ -275,8 +268,8 @@ class CommentServiceTest {
         Long commentId = comment.getId();
 
         given(postRepository.existsById(post.getId())).willReturn(true);
-        given(commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId()))
-                .willReturn(Optional.empty());
+        given(commentRepository.deleteByIdAndPostIdAndUserLoginId(comment.getId(), post.getId(), user.getLoginId()))
+                .willReturn(0);
 
         //When & Then
         assertThatThrownBy(() -> commentService.deleteComment(loginId, postId, commentId))
@@ -284,7 +277,7 @@ class CommentServiceTest {
                 .hasMessage(ErrorCode.COMMENT_NOT_FOUND.getMessage());
 
         then(postRepository).should().existsById(post.getId());
-        then(commentRepository).should().findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(comment.getId(), user.getLoginId(), post.getId());
+        then(commentRepository).should().deleteByIdAndPostIdAndUserLoginId(comment.getId(), post.getId(), user.getLoginId());
         then(userService).shouldHaveNoInteractions();
     }
 }

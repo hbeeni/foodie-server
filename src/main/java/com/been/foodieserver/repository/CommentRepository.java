@@ -30,10 +30,15 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     Optional<Comment> findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(@Param("commentId") Long commentId, @Param("loginId") String loginId, @Param("postId") Long postId);
 
     @Modifying
-    @Query(nativeQuery = true, value = "delete from comments c where c.user_id in :userIds")
-    void hardDeleteByUserIdIn(@Param("userIds") List<Long> userIds);
+    @Query("delete from Comment c " +
+            "where c.id = :commentId and c.post.id = :postId and c.user.loginId = :loginId")
+    int deleteByIdAndPostIdAndUserLoginId(@Param("commentId") Long commentId, @Param("postId") Long postId, @Param("loginId") String loginId);
 
     @Modifying
-    @Query(nativeQuery = true, value = "delete from comments c where c.post_id in :postIds")
-    void hardDeleteByPostIdIn(@Param("postIds") List<Long> postIds);
+    @Query("delete from Comment c where c.user.id in :userIds")
+    void deleteByUserIdIn(@Param("userIds") List<Long> userIds);
+
+    @Modifying
+    @Query("delete from Comment c where c.post.id in :postIds")
+    void deleteByPostIdIn(@Param("postIds") List<Long> postIds);
 }

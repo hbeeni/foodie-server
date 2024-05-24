@@ -59,6 +59,7 @@ public class CommentController {
     public ResponseEntity<ApiResponse<CommentResponse>> deleteComment(@AuthenticationPrincipal UserDetails userDetails,
                                                                       @PathVariable("postId") @Positive(message = POST_ID_VALIDATION_MSG) Long postId,
                                                                       @PathVariable("commentId") @Positive(message = COMMENT_ID_VALIDATION_MSG) Long commentId) {
-        return ResponseEntity.ok(ApiResponse.success(commentService.deleteComment(userDetails.getUsername(), postId, commentId)));
+        commentService.deleteComment(userDetails.getUsername(), postId, commentId);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }
