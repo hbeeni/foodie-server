@@ -1,6 +1,7 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Category;
+import com.been.foodieserver.domain.Like;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.PostDto;
@@ -8,7 +9,9 @@ import com.been.foodieserver.dto.response.PostResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.fixture.PostFixture;
+import com.been.foodieserver.fixture.UserFixture;
 import com.been.foodieserver.repository.CategoryRepository;
+import com.been.foodieserver.repository.LikeRepository;
 import com.been.foodieserver.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -47,6 +51,9 @@ class PostServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private LikeRepository likeRepository;
 
     @Mock
     private PostRepository postRepository;
@@ -251,6 +258,75 @@ class PostServiceTest {
         then(followService).should().getFolloweeLoginIds(loginId);
         then(postRepository).should().findAllByUser_LoginIdIn(pageable, emptySet);
         then(userService).shouldHaveNoInteractions();
+        then(categoryRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("좋아요한 게시글 목록 조회 요청이 유효하면 좋아요한 게시글 목록 조회 성공")
+    @Test
+    void getLikedPostList_IfRequestIsValid() {
+        //Given
+        String loginId = user.getLoginId();
+        User user2 = UserFixture.get(2L, "user2");
+
+        Post post1 = PostFixture.get(1L, "title", user2.getLoginId(), "자유 게시판");
+        Post post2 = PostFixture.get(2L, "title", user2.getLoginId(), "자유 게시판");
+
+        List<Like> likes = new ArrayList<>();
+        likes.add(Like.of(user, post1));
+        likes.add(Like.of(user, post2));
+
+        List<Long> postIds = List.of(post1.getId(), post2.getId());
+
+        List<Post> content = List.of(post2, post1);
+        Page<Post> postPage = new PageImpl<>(content);
+
+        int pageNum = 1;
+        int pageSize = content.size();
+
+        given(likeRepository.findByUser_LoginId(loginId)).willReturn(likes);
+        given(postRepository.findAllByIdIn(any(Pageable.class), eq(postIds))).willReturn(postPage);
+
+        //When
+        Page<PostResponse> result = postService.getLikedPostList(loginId, pageNum, pageSize);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(content.size());
+        assertThat(result.getNumber() + 1).isEqualTo(pageNum);
+        assertThat(result.getSize()).isEqualTo(pageSize);
+        assertThat(result.getContent().get(0).getPostId()).isEqualTo(post2.getId());
+
+        then(likeRepository).should().findByUser_LoginId(loginId);
+        then(postRepository).should().findAllByIdIn(any(Pageable.class), eq(postIds));
+        then(userService).shouldHaveNoInteractions();
+        then(followService).shouldHaveNoInteractions();
+        then(categoryRepository).shouldHaveNoInteractions();
+    }
+
+    @DisplayName("좋아요한 게시글이 없으면 빈 게시글 목록 반환")
+    @Test
+    void returnEmptyPostList_IfNoLikedPostExist() {
+        //Given
+        String loginId = user.getLoginId();
+        int pageNum = 1;
+        int pageSize = 10;
+
+        given(likeRepository.findByUser_LoginId(loginId)).willReturn(List.of());
+
+        //When
+        Page<PostResponse> result = postService.getLikedPostList(loginId, pageNum, pageSize);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isZero();
+        assertThat(result.getNumber() + 1).isEqualTo(pageNum);
+        assertThat(result.getSize()).isEqualTo(pageSize);
+        assertThat(result.getContent()).isEmpty();
+
+        then(likeRepository).should().findByUser_LoginId(loginId);
+        then(postRepository).shouldHaveNoInteractions();
+        then(userService).shouldHaveNoInteractions();
+        then(followService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
 

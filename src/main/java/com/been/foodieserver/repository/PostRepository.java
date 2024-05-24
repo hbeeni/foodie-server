@@ -22,6 +22,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Page<Post> findAll(Pageable pageable);
 
     @EntityGraph(attributePaths = {"user", "category"})
+    Page<Post> findAllByIdIn(Pageable pageable, List<Long> postIds);
+
+    @EntityGraph(attributePaths = {"user", "category"})
     Page<Post> findAllByUser_LoginId(Pageable pageable, String loginId);
 
     @EntityGraph(attributePaths = {"user", "category"})

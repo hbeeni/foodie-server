@@ -12,6 +12,8 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     boolean existsByUser_LoginIdAndPost_Id(String userLoginId, Long postId);
 
+    List<Like> findByUser_LoginId(String userLoginId);
+
     @Modifying
     @Query("delete from Like l where l.user.loginId = :loginId and l.post.id = :postId")
     int deleteByUserLoginIdAndPostId(@Param("loginId") String userLoginId, @Param("postId") Long postId);
