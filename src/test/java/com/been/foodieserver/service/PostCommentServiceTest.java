@@ -34,7 +34,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
-class CommentServiceTest {
+class PostCommentServiceTest {
 
     @Mock
     private UserService userService;
@@ -46,7 +46,7 @@ class CommentServiceTest {
     private CommentRepository commentRepository;
 
     @InjectMocks
-    private CommentService commentService;
+    private PostCommentService postCommentService;
 
     private Comment comment;
     private Post post;
@@ -63,7 +63,7 @@ class CommentServiceTest {
                 .build();
     }
 
-    @DisplayName("댓글 목록 요청이 유효하면 댓글 목록 조회 성공")
+    @DisplayName("댓글 목록 조회 요청이 유효하면 댓글 목록 조회 성공")
     @Test
     void getCommentList_IfRequestIsValid() {
         //Given
@@ -81,7 +81,7 @@ class CommentServiceTest {
         given(commentRepository.findAllWithUserAndPostAndCategoryByPostId(any(Pageable.class), eq(postId))).willReturn(commentPage);
 
         //When
-        Page<CommentResponse> result = commentService.getCommentList(postId, pageNum, pageSize);
+        Page<CommentResponse> result = postCommentService.getCommentList(postId, pageNum, pageSize);
 
         //Then
         assertThat(result).isNotNull();
@@ -104,7 +104,7 @@ class CommentServiceTest {
         given(postRepository.existsById(postId)).willReturn(false);
 
         //When
-        assertThatThrownBy(() -> commentService.getCommentList(postId, 1, 10))
+        assertThatThrownBy(() -> postCommentService.getCommentList(postId, 1, 10))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
 
@@ -114,16 +114,16 @@ class CommentServiceTest {
         then(commentRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("댓글 요청이 유효하면 댓글 작성 성공")
+    @DisplayName("댓글 작성 요청이 유효하면 댓글 작성 성공")
     @Test
     void writeComment_IfRequestIsValid() {
         //Given
-        given(postRepository.findWithFetchJoinById(post.getId())).willReturn(Optional.of(post));
+        given(postRepository.findWithUserAndCategoryById(post.getId())).willReturn(Optional.of(post));
         given(userService.getUserOrException(user.getLoginId())).willReturn(user);
         given(commentRepository.save(any(Comment.class))).willReturn(comment);
 
         //When
-        CommentResponse result = commentService.writeComment(user.getLoginId(), post.getId(), commentDto);
+        CommentResponse result = postCommentService.writeComment(user.getLoginId(), post.getId(), commentDto);
 
         //Then
         assertThat(result).isNotNull();
@@ -132,7 +132,7 @@ class CommentServiceTest {
         assertThat(result.getCategoryName()).isEqualTo(post.getCategory().getName());
         assertThat(result.getWriter().getLoginId()).isEqualTo(user.getLoginId());
 
-        then(postRepository).should().findWithFetchJoinById(post.getId());
+        then(postRepository).should().findWithUserAndCategoryById(post.getId());
         then(userService).should().getUserOrException(user.getLoginId());
         then(commentRepository).should().save(any(Comment.class));
     }
@@ -144,15 +144,15 @@ class CommentServiceTest {
         Long postId = post.getId();
         String loginId = user.getLoginId();
 
-        given(postRepository.findWithFetchJoinById(postId)).willReturn(Optional.empty());
+        given(postRepository.findWithUserAndCategoryById(postId)).willReturn(Optional.empty());
 
         //When
-        assertThatThrownBy(() -> commentService.writeComment(loginId, postId, commentDto))
+        assertThatThrownBy(() -> postCommentService.writeComment(loginId, postId, commentDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
 
         //Then
-        then(postRepository).should().findWithFetchJoinById(postId);
+        then(postRepository).should().findWithUserAndCategoryById(postId);
         then(userService).shouldHaveNoInteractions();
         then(commentRepository).shouldHaveNoInteractions();
     }
@@ -166,7 +166,7 @@ class CommentServiceTest {
                 .willReturn(Optional.of(comment));
 
         //When
-        CommentResponse result = commentService.modifyComment(user.getLoginId(), post.getId(), comment.getId(), commentDto);
+        CommentResponse result = postCommentService.modifyComment(user.getLoginId(), post.getId(), comment.getId(), commentDto);
 
         //Then
         assertThat(result).isNotNull();
@@ -191,7 +191,7 @@ class CommentServiceTest {
         given(postRepository.existsById(post.getId())).willReturn(false);
 
         //When & Then
-        assertThatThrownBy(() -> commentService.modifyComment(loginId, postId, commentId, commentDto))
+        assertThatThrownBy(() -> postCommentService.modifyComment(loginId, postId, commentId, commentDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
 
@@ -213,7 +213,7 @@ class CommentServiceTest {
                 .willReturn(Optional.empty());
 
         //When & Then
-        assertThatThrownBy(() -> commentService.modifyComment(loginId, postId, commentId, commentDto))
+        assertThatThrownBy(() -> postCommentService.modifyComment(loginId, postId, commentId, commentDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.COMMENT_NOT_FOUND.getMessage());
 
@@ -231,7 +231,7 @@ class CommentServiceTest {
                 .willReturn(1);
 
         //When
-        commentService.deleteComment(user.getLoginId(), post.getId(), comment.getId());
+        postCommentService.deleteComment(user.getLoginId(), post.getId(), comment.getId());
 
         //Then
         then(postRepository).should().existsById(post.getId());
@@ -250,7 +250,7 @@ class CommentServiceTest {
         given(postRepository.existsById(post.getId())).willReturn(false);
 
         //When & Then
-        assertThatThrownBy(() -> commentService.deleteComment(loginId, postId, commentId))
+        assertThatThrownBy(() -> postCommentService.deleteComment(loginId, postId, commentId))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
 
@@ -272,7 +272,7 @@ class CommentServiceTest {
                 .willReturn(0);
 
         //When & Then
-        assertThatThrownBy(() -> commentService.deleteComment(loginId, postId, commentId))
+        assertThatThrownBy(() -> postCommentService.deleteComment(loginId, postId, commentId))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.COMMENT_NOT_FOUND.getMessage());
 

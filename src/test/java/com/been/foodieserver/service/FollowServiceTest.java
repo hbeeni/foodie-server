@@ -79,7 +79,7 @@ class FollowServiceTest {
         then(followRepository).should().save(any(Follow.class));
     }
 
-    @DisplayName("팔로우할 유저 로그인 아이디가 존재하지 않으면 예외 발생")
+    @DisplayName("팔로우 시 팔로우할 유저 로그인 아이디가 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfFollowingNonExistentUser() {
         //Given
@@ -96,7 +96,7 @@ class FollowServiceTest {
         then(userRepository).should().findByLoginId(followeeLoginId);
     }
 
-    @DisplayName("본인을 팔로우하면 예외 발생")
+    @DisplayName("팔로우 시 본인을 팔로우하면 예외 발생")
     @Test
     void throwsException_IfUserFollowsSelf() {
         //Given
@@ -113,7 +113,7 @@ class FollowServiceTest {
         then(userRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("이미 팔로우한 유저를 또 팔로우하면 아무 일도 일어나지 않고 결과 반환")
+    @DisplayName("팔로우 시 이미 팔로우한 유저를 또 팔로우하면 아무 일도 일어나지 않고 결과 반환")
     @Test
     void noAction_IfFollowAlreadyFollowingUser() {
         //Given
@@ -149,7 +149,7 @@ class FollowServiceTest {
         then(followRepository).should().deleteByFollower_LoginIdAndFollowee_LoginId(followerLoginId, followeeLoginId);
     }
 
-    @DisplayName("팔로우하지 않은 유저를 언팔로우하면 예외 발생")
+    @DisplayName("언팔로우 시 팔로우하지 않은 유저를 언팔로우하면 예외 발생")
     @Test
     void throwsException_IfUnfollowUserNotFollowed() {
         //Given
@@ -164,7 +164,7 @@ class FollowServiceTest {
         then(followRepository).should().existsByFollower_LoginIdAndFollowee_LoginId(followerLoginId, followeeLoginId);
     }
 
-    @DisplayName("본인을 언팔로우하면 예외 발생")
+    @DisplayName("언팔로우 시 본인을 언팔로우하면 예외 발생")
     @Test
     void throwsException_IfUserUnfollowsSelf() {
         //Given
@@ -193,7 +193,7 @@ class FollowServiceTest {
         Follow follow2 = Follow.of(user, followee2);
         List<Follow> followList = List.of(follow1, follow2);
 
-        given(followRepository.findAllByFollower_LoginId(followerLoginId)).willReturn(followList);
+        given(followRepository.findAllWithFollowerAndFolloweeByFollower_LoginId(followerLoginId)).willReturn(followList);
 
         //When
         Set<String> result = followService.getFolloweeLoginIds(user.getLoginId());
@@ -201,16 +201,16 @@ class FollowServiceTest {
         //Then
         assertThat(result).isNotNull().hasSize(followList.size());
 
-        then(followRepository).should().findAllByFollower_LoginId(followerLoginId);
+        then(followRepository).should().findAllWithFollowerAndFolloweeByFollower_LoginId(followerLoginId);
     }
 
-    @DisplayName("팔로우한 사용자가 없으면 빈 목록 반환")
+    @DisplayName("팔로우한 사용자 로그인 아이디 목록 조회 시 팔로우한 사용자가 없으면 빈 목록 반환")
     @Test
     void returnEmptySet_IfNoFolloweesExist() {
         //Given
         String loginId = "follower";
 
-        given(followRepository.findAllByFollower_LoginId(loginId)).willReturn(List.of());
+        given(followRepository.findAllWithFollowerAndFolloweeByFollower_LoginId(loginId)).willReturn(List.of());
 
         //When
         Set<String> result = followService.getFolloweeLoginIds(loginId);
@@ -218,6 +218,6 @@ class FollowServiceTest {
         //Then
         assertThat(result).isNotNull().isEmpty();
 
-        then(followRepository).should().findAllByFollower_LoginId(loginId);
+        then(followRepository).should().findAllWithFollowerAndFolloweeByFollower_LoginId(loginId);
     }
 }

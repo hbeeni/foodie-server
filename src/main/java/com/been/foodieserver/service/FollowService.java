@@ -57,7 +57,7 @@ public class FollowService {
     }
 
     public Set<String> getFolloweeLoginIds(String loginId) {
-        return followRepository.findAllByFollower_LoginId(loginId).stream()
+        return followRepository.findAllWithFollowerAndFolloweeByFollower_LoginId(loginId).stream()
                 .map(Follow::getFollowee)
                 .map(User::getLoginId)
                 .collect(Collectors.toSet());

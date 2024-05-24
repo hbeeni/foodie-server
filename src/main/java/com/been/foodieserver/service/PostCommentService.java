@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 @Service
-public class CommentService {
+public class PostCommentService {
 
     private final UserService userService;
     private final PostRepository postRepository;
@@ -37,7 +37,7 @@ public class CommentService {
     }
 
     public CommentResponse writeComment(String loginId, Long postId, CommentDto dto) {
-        Post post = postRepository.findWithFetchJoinById(postId)
+        Post post = postRepository.findWithUserAndCategoryById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
 
         User user = userService.getUserOrException(loginId);

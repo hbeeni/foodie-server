@@ -10,7 +10,7 @@ import com.been.foodieserver.dto.response.CommentResponse;
 import com.been.foodieserver.fixture.CommentFixture;
 import com.been.foodieserver.fixture.PostFixture;
 import com.been.foodieserver.fixture.UserFixture;
-import com.been.foodieserver.service.CommentService;
+import com.been.foodieserver.service.PostCommentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @AutoConfigureMockMvc
 @SpringBootTest
-class CommentControllerTest {
+class PostCommentControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -50,7 +50,7 @@ class CommentControllerTest {
     private ObjectMapper mapper;
 
     @MockBean
-    private CommentService commentService;
+    private PostCommentService postCommentService;
 
     @Value("${api.endpoint.base-url}")
     private String baseUrl;
@@ -73,7 +73,7 @@ class CommentControllerTest {
         int pageNum = 1;
         int pageSize = commentResponsePage.getSize();
 
-        when(commentService.getCommentList(post.getId(), pageNum, pageSize)).thenReturn(commentResponsePage);
+        when(postCommentService.getCommentList(post.getId(), pageNum, pageSize)).thenReturn(commentResponsePage);
 
         //When & Then
         mockMvc.perform(get(baseUrl + "/posts/" + post.getId() + "/comments")
@@ -88,7 +88,7 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.pagination.currentPage").value(pageNum))
                 .andExpect(jsonPath("$.pagination.pageSize").value(pageSize));
 
-        then(commentService).should().getCommentList(post.getId(), pageNum, pageSize);
+        then(postCommentService).should().getCommentList(post.getId(), pageNum, pageSize);
     }
 
     @WithMockUser
@@ -104,7 +104,7 @@ class CommentControllerTest {
 
         CommentResponse response = CommentResponse.of(comment);
 
-        when(commentService.writeComment(eq(user.getLoginId()), eq(post.getId()), any(CommentDto.class))).thenReturn(response);
+        when(postCommentService.writeComment(eq(user.getLoginId()), eq(post.getId()), any(CommentDto.class))).thenReturn(response);
 
         //When & Then
         mockMvc.perform(post(baseUrl + "/posts/" + post.getId() + "/comments")
@@ -118,7 +118,7 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.data.postId").value(response.getPostId()))
                 .andExpect(jsonPath("$.data.content").value(response.getContent()));
 
-        then(commentService).should().writeComment(eq(user.getLoginId()), eq(post.getId()), any(CommentDto.class));
+        then(postCommentService).should().writeComment(eq(user.getLoginId()), eq(post.getId()), any(CommentDto.class));
     }
 
     @WithMockUser
@@ -134,7 +134,7 @@ class CommentControllerTest {
 
         CommentResponse response = CommentResponse.of(comment);
 
-        when(commentService.modifyComment(eq(user.getLoginId()), eq(post.getId()), eq(comment.getId()), any(CommentDto.class))).thenReturn(response);
+        when(postCommentService.modifyComment(eq(user.getLoginId()), eq(post.getId()), eq(comment.getId()), any(CommentDto.class))).thenReturn(response);
 
         //When & Then
         mockMvc.perform(put(baseUrl + "/posts/" + post.getId() + "/comments/" + comment.getId())
@@ -148,7 +148,7 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.data.postId").value(response.getPostId()))
                 .andExpect(jsonPath("$.data.content").value(response.getContent()));
 
-        then(commentService).should().modifyComment(eq(user.getLoginId()), eq(post.getId()), eq(comment.getId()), any(CommentDto.class));
+        then(postCommentService).should().modifyComment(eq(user.getLoginId()), eq(post.getId()), eq(comment.getId()), any(CommentDto.class));
     }
 
     @WithMockUser
@@ -162,7 +162,7 @@ class CommentControllerTest {
         User user = UserFixture.get(2L, "user");
         Comment comment = CommentFixture.get(user, post, 1L, request.getContent());
 
-        willDoNothing().given(commentService).deleteComment(user.getLoginId(), post.getId(), comment.getId());
+        willDoNothing().given(postCommentService).deleteComment(user.getLoginId(), post.getId(), comment.getId());
 
         //When & Then
         mockMvc.perform(delete(baseUrl + "/posts/" + post.getId() + "/comments/" + comment.getId())
@@ -171,6 +171,6 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
                 .andExpect(jsonPath("$.data").doesNotExist());
 
-        then(commentService).should().deleteComment(user.getLoginId(), post.getId(), comment.getId());
+        then(postCommentService).should().deleteComment(user.getLoginId(), post.getId(), comment.getId());
     }
 }

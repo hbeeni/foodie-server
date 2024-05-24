@@ -90,7 +90,7 @@ class PostServiceTest {
         int pageNum = 1;
         int pageSize = content.size();
 
-        given(postRepository.findAll(any(Pageable.class))).willReturn(postPage);
+        given(postRepository.findAllWithUserAndCategory(any(Pageable.class))).willReturn(postPage);
 
         //When
         Page<PostResponse> result = postService.getPostList(pageNum, pageSize);
@@ -102,7 +102,7 @@ class PostServiceTest {
         assertThat(result.getSize()).isEqualTo(pageSize);
         assertThat(result.getContent().get(0).getTitle()).isEqualTo(post2.getTitle());
 
-        then(postRepository).should().findAll(any(Pageable.class));
+        then(postRepository).should().findAllWithUserAndCategory(any(Pageable.class));
         then(userService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
@@ -121,7 +121,7 @@ class PostServiceTest {
         int pageNum = 1;
         int pageSize = content.size();
 
-        given(postRepository.findAllByUser_LoginId(any(Pageable.class), eq(loginId))).willReturn(postPage);
+        given(postRepository.findAllWithUserAndCategoryByUser_LoginId(any(Pageable.class), eq(loginId))).willReturn(postPage);
 
         //When
         Page<PostResponse> result = postService.getMyPostList(loginId, pageNum, pageSize);
@@ -133,7 +133,7 @@ class PostServiceTest {
         assertThat(result.getSize()).isEqualTo(pageSize);
         assertThat(result.getContent().get(0).getPostId()).isEqualTo(post2.getId());
 
-        then(postRepository).should().findAllByUser_LoginId(any(Pageable.class), eq(loginId));
+        then(postRepository).should().findAllWithUserAndCategoryByUser_LoginId(any(Pageable.class), eq(loginId));
         then(userService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
@@ -153,7 +153,7 @@ class PostServiceTest {
         int pageSize = content.size();
 
         given(userService.isLoginIdExist(loginId)).willReturn(true);
-        given(postRepository.findAllByUser_LoginId(any(Pageable.class), eq(loginId))).willReturn(postPage);
+        given(postRepository.findAllWithUserAndCategoryByUser_LoginId(any(Pageable.class), eq(loginId))).willReturn(postPage);
 
         //When
         Page<PostResponse> result = postService.getPostListByUserLoginId(loginId, pageNum, pageSize);
@@ -166,7 +166,7 @@ class PostServiceTest {
         assertThat(result.getContent().get(0).getPostId()).isEqualTo(post2.getId());
 
         then(userService).should().isLoginIdExist(loginId);
-        then(postRepository).should().findAllByUser_LoginId(any(Pageable.class), eq(loginId));
+        then(postRepository).should().findAllWithUserAndCategoryByUser_LoginId(any(Pageable.class), eq(loginId));
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
@@ -209,7 +209,7 @@ class PostServiceTest {
         int pageSize = content.size();
 
         given(followService.getFolloweeLoginIds(loginId)).willReturn(followeeLoginIdSet);
-        given(postRepository.findAllByUser_LoginIdIn(any(Pageable.class), eq(followeeLoginIdSet))).willReturn(postPage);
+        given(postRepository.findAllWithUserAndCategoryByUser_LoginIdIn(any(Pageable.class), eq(followeeLoginIdSet))).willReturn(postPage);
 
         //When
         Page<PostResponse> result = postService.getPostsByFollowees(loginId, pageNum, pageSize);
@@ -222,12 +222,12 @@ class PostServiceTest {
         assertThat(result.getContent().get(0).getPostId()).isEqualTo(post4.getId());
 
         then(followService).should().getFolloweeLoginIds(loginId);
-        then(postRepository).should().findAllByUser_LoginIdIn(any(Pageable.class), eq(followeeLoginIdSet));
+        then(postRepository).should().findAllWithUserAndCategoryByUser_LoginIdIn(any(Pageable.class), eq(followeeLoginIdSet));
         then(userService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("팔로우한 유저가 없으면 빈 게시글 목록 반환")
+    @DisplayName("팔로우한 유저의 게시글 목록 조회 시 팔로우한 유저가 없으면 빈 게시글 목록 반환")
     @Test
     void returnEmptyPostList_IfNoFolloweesExist() {
         //Given
@@ -276,7 +276,7 @@ class PostServiceTest {
         int pageSize = content.size();
 
         given(likeRepository.findByUser_LoginId(loginId)).willReturn(likes);
-        given(postRepository.findAllByIdIn(any(Pageable.class), eq(postIds))).willReturn(postPage);
+        given(postRepository.findAllWithUserAndCategoryByIdIn(any(Pageable.class), eq(postIds))).willReturn(postPage);
 
         //When
         Page<PostResponse> result = postService.getLikedPostList(loginId, pageNum, pageSize);
@@ -289,13 +289,13 @@ class PostServiceTest {
         assertThat(result.getContent().get(0).getPostId()).isEqualTo(post2.getId());
 
         then(likeRepository).should().findByUser_LoginId(loginId);
-        then(postRepository).should().findAllByIdIn(any(Pageable.class), eq(postIds));
+        then(postRepository).should().findAllWithUserAndCategoryByIdIn(any(Pageable.class), eq(postIds));
         then(userService).shouldHaveNoInteractions();
         then(followService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("좋아요한 게시글이 없으면 빈 게시글 목록 반환")
+    @DisplayName("좋아요한 게시글 목록 조회 시 좋아요한 게시글이 없으면 빈 게시글 목록 반환")
     @Test
     void returnEmptyPostList_IfNoLikedPostExist() {
         //Given
@@ -322,11 +322,11 @@ class PostServiceTest {
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("게시글 요청이 유효하면 게시글 조회 성공")
+    @DisplayName("게시글 조회 요청이 유효하면 게시글 조회 성공")
     @Test
     void getPost_IfRequestIsValid() {
         //Given
-        given(postRepository.findWithFetchJoinById(post.getId())).willReturn(Optional.of(post));
+        given(postRepository.findWithUserAndCategoryById(post.getId())).willReturn(Optional.of(post));
 
         //When
         PostResponse result = postService.getPost(post.getId());
@@ -338,18 +338,18 @@ class PostServiceTest {
         assertThat(result.getWriter()).isNotNull();
         assertThat(result.getWriter().getLoginId()).isEqualTo(user.getLoginId());
 
-        then(postRepository).should().findWithFetchJoinById(post.getId());
+        then(postRepository).should().findWithUserAndCategoryById(post.getId());
         then(userService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("조회할 게시글이 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 조회 시 조회할 게시글이 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfPostDoesntExist_WhenGettingPost() {
         //Given
         Long postId = post.getId();
 
-        given(postRepository.findWithFetchJoinById(postId)).willReturn(Optional.empty());
+        given(postRepository.findWithUserAndCategoryById(postId)).willReturn(Optional.empty());
 
         //When
         assertThatThrownBy(() -> postService.getPost(postId))
@@ -357,12 +357,12 @@ class PostServiceTest {
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
 
         //Then
-        then(postRepository).should().findWithFetchJoinById(postId);
+        then(postRepository).should().findWithUserAndCategoryById(postId);
         then(userService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("게시글 요청이 유효하면 게시글 작성 성공")
+    @DisplayName("게시글 작성 요청이 유효하면 게시글 작성 성공")
     @Test
     void writePost_IfRequestIsValid() {
         //Given
@@ -385,9 +385,9 @@ class PostServiceTest {
         then(postRepository).should().save(any(Post.class));
     }
 
-    @DisplayName("카테고리가 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 작성 시 카테고리가 존재하지 않으면 예외 발생")
     @Test
-    void throwsException_IfCategoryDoesntExist() {
+    void throwsException_IfCategoryDoesntExist_WhenWritingPost() {
         //Given
         String loginId = user.getLoginId();
 
@@ -440,7 +440,7 @@ class PostServiceTest {
         then(postRepository).should().flush();
     }
 
-    @DisplayName("카테고리가 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 수정 시 카테고리가 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfCategoryDoesntExist_WhenModifyingPost() {
         //Given
@@ -460,7 +460,7 @@ class PostServiceTest {
         then(userService).shouldHaveNoInteractions();
     }
 
-    @DisplayName("수정할 게시글이 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 수정 시 수정할 게시글이 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfPostDoesntExist_WhenModifyingPost() {
         //Given
@@ -486,7 +486,7 @@ class PostServiceTest {
     @Test
     void deletePost_IfRequestIsValid() {
         //Given
-        given(postRepository.findWithFetchJoinByIdAndUser_LoginId(post.getId(), user.getLoginId())).willReturn(Optional.of(post));
+        given(postRepository.findWithUserAndCategoryByIdAndUser_LoginId(post.getId(), user.getLoginId())).willReturn(Optional.of(post));
         willDoNothing().given(postRepository).flush();
 
         //When
@@ -499,20 +499,20 @@ class PostServiceTest {
         assertThat(result.getTitle()).isNotNull();
         assertThat(result.getDeletedAt()).isNotNull();
 
-        then(postRepository).should().findWithFetchJoinByIdAndUser_LoginId(post.getId(), user.getLoginId());
+        then(postRepository).should().findWithUserAndCategoryByIdAndUser_LoginId(post.getId(), user.getLoginId());
         then(postRepository).should().flush();
         then(categoryRepository).shouldHaveNoInteractions();
         then(userService).shouldHaveNoInteractions();
     }
 
-    @DisplayName("삭제할 게시글이 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 삭제 시 삭제할 게시글이 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfPostDoesntExist_WhenDeletingPost() {
         //Given
         String loginId = user.getLoginId();
         Long postId = post.getId();
 
-        given(postRepository.findWithFetchJoinByIdAndUser_LoginId(postId, user.getLoginId())).willReturn(Optional.empty());
+        given(postRepository.findWithUserAndCategoryByIdAndUser_LoginId(postId, user.getLoginId())).willReturn(Optional.empty());
 
         //When
         assertThatThrownBy(() -> postService.deletePost(loginId, postId))
@@ -520,7 +520,7 @@ class PostServiceTest {
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
 
         //Then
-        then(postRepository).should().findWithFetchJoinByIdAndUser_LoginId(postId, loginId);
+        then(postRepository).should().findWithUserAndCategoryByIdAndUser_LoginId(postId, loginId);
         then(postRepository).shouldHaveNoMoreInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
         then(userService).shouldHaveNoInteractions();

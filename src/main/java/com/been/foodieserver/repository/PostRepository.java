@@ -18,17 +18,19 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     int countByUser_LoginId(String loginId);
 
-    @EntityGraph(attributePaths = {"user", "category"})
-    Page<Post> findAll(Pageable pageable);
+    @Query("select p from Post p " +
+            "join fetch p.user " +
+            "join fetch p.category")
+    Page<Post> findAllWithUserAndCategory(Pageable pageable);
 
     @EntityGraph(attributePaths = {"user", "category"})
-    Page<Post> findAllByIdIn(Pageable pageable, List<Long> postIds);
+    Page<Post> findAllWithUserAndCategoryByIdIn(Pageable pageable, List<Long> postIds);
 
     @EntityGraph(attributePaths = {"user", "category"})
-    Page<Post> findAllByUser_LoginId(Pageable pageable, String loginId);
+    Page<Post> findAllWithUserAndCategoryByUser_LoginId(Pageable pageable, String loginId);
 
     @EntityGraph(attributePaths = {"user", "category"})
-    Page<Post> findAllByUser_LoginIdIn(Pageable pageable, Set<String> loginIds);
+    Page<Post> findAllWithUserAndCategoryByUser_LoginIdIn(Pageable pageable, Set<String> loginIds);
 
     @Query(nativeQuery = true, value = "select p.id from posts p where p.user_id in :userIds")
     List<Long> findAllByUserIdIn(@Param("userIds") List<Long> userIds);
@@ -39,10 +41,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     Optional<Post> findByIdAndUser_LoginId(Long postId, String userLoginId);
 
     @EntityGraph(attributePaths = {"user", "category"})
-    Optional<Post> findWithFetchJoinById(Long postId);
+    Optional<Post> findWithUserAndCategoryById(Long postId);
 
     @EntityGraph(attributePaths = {"user", "category"})
-    Optional<Post> findWithFetchJoinByIdAndUser_LoginId(Long postId, String userLoginId);
+    Optional<Post> findWithUserAndCategoryByIdAndUser_LoginId(Long postId, String userLoginId);
 
     @Modifying
     @Query(nativeQuery = true, value = "delete from posts p where p.id in :postIds")

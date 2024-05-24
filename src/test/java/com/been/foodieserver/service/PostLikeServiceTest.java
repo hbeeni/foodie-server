@@ -81,7 +81,7 @@ class PostLikeServiceTest {
         then(likeRepository).should().save(any(Like.class));
     }
 
-    @DisplayName("좋아요 한 게시글을 또 좋아요 하면 예외 발생")
+    @DisplayName("좋아요 시 좋아요 한 게시글을 또 좋아요 하면 예외 발생")
     @Test
     void throwsException_IfAlreadyLikedPost() {
         //Given
@@ -101,7 +101,7 @@ class PostLikeServiceTest {
         then(userService).shouldHaveNoInteractions();
     }
 
-    @DisplayName("좋아요한 게시글이 존재하지 않으면 예외 발생")
+    @DisplayName("좋아요 시 좋아요한 게시글이 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfPostDoesntExist() {
         //Given
@@ -122,7 +122,7 @@ class PostLikeServiceTest {
         then(userService).shouldHaveNoInteractions();
     }
 
-    @DisplayName("자신의 글을 좋아요하면 예외 발생")
+    @DisplayName("좋아요 시 자신의 글을 좋아요하면 예외 발생")
     @Test
     void throwsException_IfUserLikesOwnPost() {
         //Given
@@ -159,7 +159,7 @@ class PostLikeServiceTest {
         then(likeRepository).should().deleteByUserLoginIdAndPostId(loginId, postId);
     }
 
-    @DisplayName("취소하려는 좋아요가 존재하지 않으면 예외 발생")
+    @DisplayName("좋아요 취소 시 취소하려는 좋아요가 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfLikeNotFound() {
         //Given
