@@ -227,7 +227,7 @@ class PostServiceTest {
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("팔로우한 유저가 없으면 빈 게시글 목록 반환")
+    @DisplayName("팔로우한 유저의 게시글 목록 조회 시 팔로우한 유저가 없으면 빈 게시글 목록 반환")
     @Test
     void returnEmptyPostList_IfNoFolloweesExist() {
         //Given
@@ -295,7 +295,7 @@ class PostServiceTest {
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("좋아요한 게시글이 없으면 빈 게시글 목록 반환")
+    @DisplayName("좋아요한 게시글 목록 조회 시 좋아요한 게시글이 없으면 빈 게시글 목록 반환")
     @Test
     void returnEmptyPostList_IfNoLikedPostExist() {
         //Given
@@ -322,7 +322,7 @@ class PostServiceTest {
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("게시글 요청이 유효하면 게시글 조회 성공")
+    @DisplayName("게시글 조회 요청이 유효하면 게시글 조회 성공")
     @Test
     void getPost_IfRequestIsValid() {
         //Given
@@ -343,7 +343,7 @@ class PostServiceTest {
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("조회할 게시글이 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 조회 시 조회할 게시글이 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfPostDoesntExist_WhenGettingPost() {
         //Given
@@ -362,7 +362,7 @@ class PostServiceTest {
         then(categoryRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("게시글 요청이 유효하면 게시글 작성 성공")
+    @DisplayName("게시글 작성 요청이 유효하면 게시글 작성 성공")
     @Test
     void writePost_IfRequestIsValid() {
         //Given
@@ -385,9 +385,9 @@ class PostServiceTest {
         then(postRepository).should().save(any(Post.class));
     }
 
-    @DisplayName("카테고리가 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 작성 시 카테고리가 존재하지 않으면 예외 발생")
     @Test
-    void throwsException_IfCategoryDoesntExist() {
+    void throwsException_IfCategoryDoesntExist_WhenWritingPost() {
         //Given
         String loginId = user.getLoginId();
 
@@ -440,7 +440,7 @@ class PostServiceTest {
         then(postRepository).should().flush();
     }
 
-    @DisplayName("카테고리가 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 수정 시 카테고리가 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfCategoryDoesntExist_WhenModifyingPost() {
         //Given
@@ -460,7 +460,7 @@ class PostServiceTest {
         then(userService).shouldHaveNoInteractions();
     }
 
-    @DisplayName("수정할 게시글이 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 수정 시 수정할 게시글이 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfPostDoesntExist_WhenModifyingPost() {
         //Given
@@ -505,7 +505,7 @@ class PostServiceTest {
         then(userService).shouldHaveNoInteractions();
     }
 
-    @DisplayName("삭제할 게시글이 존재하지 않으면 예외 발생")
+    @DisplayName("게시글 삭제 시 삭제할 게시글이 존재하지 않으면 예외 발생")
     @Test
     void throwsException_IfPostDoesntExist_WhenDeletingPost() {
         //Given

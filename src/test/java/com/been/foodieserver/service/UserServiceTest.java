@@ -292,7 +292,7 @@ class UserServiceTest {
         then(postRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("닉네임 수정 시 다른 유저의 닉네임과 중복되지 않으면 변경함")
+    @DisplayName("닉네임 수정 시 다른 유저의 닉네임과 중복되지 않으면 변경 성공")
     @Test
     void modifyNickname_IfNicknameIsNotDuplicated() {
         //Given
@@ -337,7 +337,7 @@ class UserServiceTest {
         then(userRepository).shouldHaveNoMoreInteractions();
     }
 
-    @DisplayName("비밀번호 변경 시 요청이 유효하면 비밀번호 변경")
+    @DisplayName("비밀번호 변경 시 요청이 유효하면 비밀번호 변경 성공")
     @Test
     void changePassword_IfRequestIsValid() {
         //Given

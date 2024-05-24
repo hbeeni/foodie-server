@@ -63,7 +63,7 @@ class PostCommentServiceTest {
                 .build();
     }
 
-    @DisplayName("댓글 목록 요청이 유효하면 댓글 목록 조회 성공")
+    @DisplayName("댓글 목록 조회 요청이 유효하면 댓글 목록 조회 성공")
     @Test
     void getCommentList_IfRequestIsValid() {
         //Given
@@ -114,7 +114,7 @@ class PostCommentServiceTest {
         then(commentRepository).shouldHaveNoInteractions();
     }
 
-    @DisplayName("댓글 요청이 유효하면 댓글 작성 성공")
+    @DisplayName("댓글 작성 요청이 유효하면 댓글 작성 성공")
     @Test
     void writeComment_IfRequestIsValid() {
         //Given

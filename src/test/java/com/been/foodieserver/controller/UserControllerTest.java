@@ -70,22 +70,10 @@ class UserControllerTest {
     private String baseUrl;
 
     private String userApi;
-    private String signUpApi;
-    private String loginApi;
-    private String logoutApi;
-    private String myInfoApi;
-    private String passwordApi;
-    private String deleteApi;
 
     @BeforeEach
     void setUp() {
         userApi = baseUrl + "/users";
-        signUpApi = userApi + "/sign-up";
-        loginApi = userApi + "/login";
-        logoutApi = userApi + "/logout";
-        myInfoApi = userApi + "/my";
-        passwordApi = userApi + "/my/password";
-        deleteApi = userApi + "/my";
     }
 
     @DisplayName("요청이 유효하면 회원가입 성공")
@@ -97,7 +85,7 @@ class UserControllerTest {
         willDoNothing().given(userService).signUp(any(UserDto.class));
 
         //When & Then
-        mockMvc.perform(post(signUpApi).with(csrf())
+        mockMvc.perform(post(userApi + "/sign-up").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
@@ -117,7 +105,7 @@ class UserControllerTest {
         willThrow(new CustomException(ErrorCode.DUPLICATE_ID)).given(userService).signUp(any(UserDto.class));
 
         //When & Then
-        mockMvc.perform(post(signUpApi).with(csrf())
+        mockMvc.perform(post(userApi + "/sign-up").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
@@ -138,7 +126,7 @@ class UserControllerTest {
         willThrow(new CustomException(ErrorCode.DUPLICATE_NICKNAME)).given(userService).signUp(any(UserDto.class));
 
         //When & Then
-        mockMvc.perform(post(signUpApi).with(csrf())
+        mockMvc.perform(post(userApi + "/sign-up").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
@@ -163,7 +151,7 @@ class UserControllerTest {
         given(userService.searchUser(loginId)).willReturn(Optional.of(customUserDetails));
 
         //When & Then
-        mockMvc.perform(post(loginApi).with(csrf())
+        mockMvc.perform(post(userApi + "/login").with(csrf())
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .accept(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("loginId", loginId)
@@ -184,7 +172,7 @@ class UserControllerTest {
         given(userService.searchUser(loginId)).willReturn(Optional.empty());
 
         //When & Then
-        mockMvc.perform(post(loginApi).with(csrf())
+        mockMvc.perform(post(userApi + "/login").with(csrf())
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .accept(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("loginId", loginId)
@@ -202,7 +190,7 @@ class UserControllerTest {
         //Given
 
         //When & Then
-        mockMvc.perform(post(logoutApi).with(csrf()))
+        mockMvc.perform(post(userApi + "/logout").with(csrf()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS));
     }
@@ -220,7 +208,7 @@ class UserControllerTest {
         given(userService.getMyInfo(loginId)).willReturn(userInfoWithStatisticsResponse);
 
         //When & Then
-        mockMvc.perform(get(myInfoApi)
+        mockMvc.perform(get(userApi + "/my")
                         .with(user(loginId).roles(Role.USER.getRoleName()))
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8"))
@@ -243,7 +231,7 @@ class UserControllerTest {
         //Given
 
         //When & Then
-        mockMvc.perform(get(myInfoApi)
+        mockMvc.perform(get(userApi + "/my")
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8"))
                 .andExpect(status().is(ErrorCode.AUTH_FAIL.getStatus().value()))
@@ -318,7 +306,7 @@ class UserControllerTest {
         given(userService.modifyMyInfo(eq(loginId), any(UserDto.class))).willReturn(response);
 
         //When & Then
-        mockMvc.perform(put(myInfoApi)
+        mockMvc.perform(put(userApi + "/my")
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
                         .accept(MediaType.APPLICATION_JSON)
@@ -348,7 +336,7 @@ class UserControllerTest {
         willDoNothing().given(userService).changePassword(loginId, currentPassword, newPassword, newPassword);
 
         //When & Then
-        mockMvc.perform(put(passwordApi)
+        mockMvc.perform(put(userApi + "/my/password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8")
                         .accept(MediaType.APPLICATION_JSON)
@@ -373,7 +361,7 @@ class UserControllerTest {
         when(userService.deleteUser(loginId)).thenReturn(response);
 
         //When & Then
-        mockMvc.perform(delete(deleteApi)
+        mockMvc.perform(delete(userApi + "/my")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
