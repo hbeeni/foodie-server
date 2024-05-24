@@ -8,6 +8,8 @@ import com.been.foodieserver.dto.response.PostResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.repository.CategoryRepository;
+import com.been.foodieserver.repository.CommentRepository;
+import com.been.foodieserver.repository.LikeRepository;
 import com.been.foodieserver.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,9 +17,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
@@ -30,6 +36,8 @@ public class PostService {
     private final FollowService followService;
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
+    private final LikeRepository likeRepository;
+    private final CommentRepository commentRepository;
 
     public Page<PostResponse> getPostList(int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
@@ -92,6 +100,28 @@ public class PostService {
         postRepository.flush();
 
         return PostResponse.of(post);
+    }
+
+    /**
+     * 매일 3시 30분 삭제된 지 7일이 지난 게시글 삭제
+     */
+    @Scheduled(cron = "${schedules.cron.post.delete}")
+    public void hardDeletePostsDeletedFor7Days() {
+        log.info("hard delete posts");
+
+        Timestamp sevenDaysAgo = Timestamp.valueOf(LocalDateTime.now().minusDays(7));
+        List<Long> postIdsToDelete = postRepository.findAllByDeletedAtBefore(sevenDaysAgo);
+
+        likeRepository.deleteByPostIdIn(postIdsToDelete);
+        commentRepository.deleteByPostIdIn(postIdsToDelete);
+
+        int deletedCount = postRepository.hardDeleteByPostIdIn(postIdsToDelete);
+
+        if (postIdsToDelete.size() != deletedCount) {
+            log.error("post deletion not successful. to be deleted: {}, deleted: {}", postIdsToDelete.size(), deletedCount);
+        } else {
+            log.info("delete {} posts", deletedCount);
+        }
     }
 
     private static PageRequest makePageable(int pageNum, int pageSize) {
