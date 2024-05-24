@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 @Service
-public class CommentService {
+public class PostCommentService {
 
     private final UserService userService;
     private final PostRepository postRepository;
