@@ -1,6 +1,7 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Category;
+import com.been.foodieserver.domain.Like;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.PostDto;
@@ -64,7 +65,28 @@ public class PostService {
     public Page<PostResponse> getPostsByFollowees(String loginId, int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
         Set<String> followeeLoginIdSet = followService.getFolloweeLoginIds(loginId);
+
+        if (followeeLoginIdSet.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
         return postRepository.findAllByUser_LoginIdIn(pageable, followeeLoginIdSet).map(PostResponse::of);
+    }
+
+    /**
+     * 좋아요한 게시글 목록 조회
+     */
+    public Page<PostResponse> getLikedPostList(String loginId, int pageNum, int pageSize) {
+        Pageable pageable = makePageable(pageNum, pageSize);
+
+        List<Like> likes = likeRepository.findByUser_LoginId(loginId);
+
+        if (likes.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Long> likedPostIds = likes.stream().map(Like::getPost).map(Post::getId).toList();
+        return postRepository.findAllByIdIn(pageable, likedPostIds).map(PostResponse::of);
     }
 
     public PostResponse getPost(Long postId) {
