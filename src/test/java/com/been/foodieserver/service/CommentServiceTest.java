@@ -118,7 +118,7 @@ class CommentServiceTest {
     @Test
     void writeComment_IfRequestIsValid() {
         //Given
-        given(postRepository.findWithFetchJoinById(post.getId())).willReturn(Optional.of(post));
+        given(postRepository.findWithUserAndCategoryById(post.getId())).willReturn(Optional.of(post));
         given(userService.getUserOrException(user.getLoginId())).willReturn(user);
         given(commentRepository.save(any(Comment.class))).willReturn(comment);
 
@@ -132,7 +132,7 @@ class CommentServiceTest {
         assertThat(result.getCategoryName()).isEqualTo(post.getCategory().getName());
         assertThat(result.getWriter().getLoginId()).isEqualTo(user.getLoginId());
 
-        then(postRepository).should().findWithFetchJoinById(post.getId());
+        then(postRepository).should().findWithUserAndCategoryById(post.getId());
         then(userService).should().getUserOrException(user.getLoginId());
         then(commentRepository).should().save(any(Comment.class));
     }
@@ -144,7 +144,7 @@ class CommentServiceTest {
         Long postId = post.getId();
         String loginId = user.getLoginId();
 
-        given(postRepository.findWithFetchJoinById(postId)).willReturn(Optional.empty());
+        given(postRepository.findWithUserAndCategoryById(postId)).willReturn(Optional.empty());
 
         //When
         assertThatThrownBy(() -> commentService.writeComment(loginId, postId, commentDto))
@@ -152,7 +152,7 @@ class CommentServiceTest {
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
 
         //Then
-        then(postRepository).should().findWithFetchJoinById(postId);
+        then(postRepository).should().findWithUserAndCategoryById(postId);
         then(userService).shouldHaveNoInteractions();
         then(commentRepository).shouldHaveNoInteractions();
     }

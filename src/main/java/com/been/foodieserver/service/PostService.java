@@ -42,12 +42,12 @@ public class PostService {
 
     public Page<PostResponse> getPostList(int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
-        return postRepository.findAll(pageable).map(PostResponse::of);
+        return postRepository.findAllWithUserAndCategory(pageable).map(PostResponse::of);
     }
 
     public Page<PostResponse> getMyPostList(String loginId, int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
-        return postRepository.findAllByUser_LoginId(pageable, loginId).map(PostResponse::of);
+        return postRepository.findAllWithUserAndCategoryByUser_LoginId(pageable, loginId).map(PostResponse::of);
     }
 
     public Page<PostResponse> getPostListByUserLoginId(String writerLoginId, int pageNum, int pageSize) {
@@ -56,7 +56,7 @@ public class PostService {
         }
 
         PageRequest pageable = makePageable(pageNum, pageSize);
-        return postRepository.findAllByUser_LoginId(pageable, writerLoginId).map(PostResponse::of);
+        return postRepository.findAllWithUserAndCategoryByUser_LoginId(pageable, writerLoginId).map(PostResponse::of);
     }
 
     /**
@@ -70,7 +70,7 @@ public class PostService {
             return Page.empty(pageable);
         }
 
-        return postRepository.findAllByUser_LoginIdIn(pageable, followeeLoginIdSet).map(PostResponse::of);
+        return postRepository.findAllWithUserAndCategoryByUser_LoginIdIn(pageable, followeeLoginIdSet).map(PostResponse::of);
     }
 
     /**
@@ -86,7 +86,7 @@ public class PostService {
         }
 
         List<Long> likedPostIds = likes.stream().map(Like::getPost).map(Post::getId).toList();
-        return postRepository.findAllByIdIn(pageable, likedPostIds).map(PostResponse::of);
+        return postRepository.findAllWithUserAndCategoryByIdIn(pageable, likedPostIds).map(PostResponse::of);
     }
 
     public PostResponse getPost(Long postId) {
@@ -151,12 +151,12 @@ public class PostService {
     }
 
     public Post getPostWithFetchJoinOrException(Long postId) {
-        return postRepository.findWithFetchJoinById(postId)
+        return postRepository.findWithUserAndCategoryById(postId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
     }
 
     private Post getPostWithFetchJoinByUserOrException(Long postId, String loginId) {
-        return postRepository.findWithFetchJoinByIdAndUser_LoginId(postId, loginId)
+        return postRepository.findWithUserAndCategoryByIdAndUser_LoginId(postId, loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
     }
 

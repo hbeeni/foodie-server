@@ -193,7 +193,7 @@ class FollowServiceTest {
         Follow follow2 = Follow.of(user, followee2);
         List<Follow> followList = List.of(follow1, follow2);
 
-        given(followRepository.findAllByFollower_LoginId(followerLoginId)).willReturn(followList);
+        given(followRepository.findAllWithFollowerAndFolloweeByFollower_LoginId(followerLoginId)).willReturn(followList);
 
         //When
         Set<String> result = followService.getFolloweeLoginIds(user.getLoginId());
@@ -201,7 +201,7 @@ class FollowServiceTest {
         //Then
         assertThat(result).isNotNull().hasSize(followList.size());
 
-        then(followRepository).should().findAllByFollower_LoginId(followerLoginId);
+        then(followRepository).should().findAllWithFollowerAndFolloweeByFollower_LoginId(followerLoginId);
     }
 
     @DisplayName("팔로우한 사용자가 없으면 빈 목록 반환")
@@ -210,7 +210,7 @@ class FollowServiceTest {
         //Given
         String loginId = "follower";
 
-        given(followRepository.findAllByFollower_LoginId(loginId)).willReturn(List.of());
+        given(followRepository.findAllWithFollowerAndFolloweeByFollower_LoginId(loginId)).willReturn(List.of());
 
         //When
         Set<String> result = followService.getFolloweeLoginIds(loginId);
@@ -218,6 +218,6 @@ class FollowServiceTest {
         //Then
         assertThat(result).isNotNull().isEmpty();
 
-        then(followRepository).should().findAllByFollower_LoginId(loginId);
+        then(followRepository).should().findAllWithFollowerAndFolloweeByFollower_LoginId(loginId);
     }
 }
