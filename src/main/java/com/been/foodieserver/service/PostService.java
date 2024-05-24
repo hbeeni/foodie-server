@@ -64,7 +64,12 @@ public class PostService {
      */
     public Page<PostResponse> getPostsByFollowees(String loginId, int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
-        Set<String> followeeLoginIdSet = followService.getFolloweeLoginIds(loginId); //todo: 빈 set이면 아래처럼
+        Set<String> followeeLoginIdSet = followService.getFolloweeLoginIds(loginId);
+
+        if (followeeLoginIdSet.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
         return postRepository.findAllByUser_LoginIdIn(pageable, followeeLoginIdSet).map(PostResponse::of);
     }
 

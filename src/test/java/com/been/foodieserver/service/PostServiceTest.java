@@ -22,9 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
@@ -237,13 +235,7 @@ class PostServiceTest {
         int pageNum = 1;
         int pageSize = 10;
 
-        Set<String> emptySet = Set.of();
-        List<Post> content = List.of();
-        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
-        Page<Post> page = new PageImpl<>(content, pageable, 0L);
-
-        given(followService.getFolloweeLoginIds(loginId)).willReturn(emptySet);
-        given(postRepository.findAllByUser_LoginIdIn(pageable, emptySet)).willReturn(page);
+        given(followService.getFolloweeLoginIds(loginId)).willReturn(Set.of());
 
         //When
         Page<PostResponse> result = postService.getPostsByFollowees(loginId, pageNum, pageSize);
@@ -256,7 +248,7 @@ class PostServiceTest {
         assertThat(result.getContent()).isEmpty();
 
         then(followService).should().getFolloweeLoginIds(loginId);
-        then(postRepository).should().findAllByUser_LoginIdIn(pageable, emptySet);
+        then(postRepository).shouldHaveNoInteractions();
         then(userService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
