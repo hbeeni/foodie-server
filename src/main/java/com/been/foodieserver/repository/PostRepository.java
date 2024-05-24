@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -29,6 +30,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query(nativeQuery = true, value = "select p.id from posts p where p.user_id in :userIds")
     List<Long> findAllByUserIdIn(@Param("userIds") List<Long> userIds);
 
+    @Query(nativeQuery = true, value = "select p.id from posts p where p.deleted_at <= :deletedAt")
+    List<Long> findAllByDeletedAtBefore(@Param("deletedAt") Timestamp deletedAt);
+
     Optional<Post> findByIdAndUser_LoginId(Long postId, String userLoginId);
 
     @EntityGraph(attributePaths = {"user", "category"})
@@ -39,5 +43,5 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     @Modifying
     @Query(nativeQuery = true, value = "delete from posts p where p.id in :postIds")
-    void hardDeleteByPostIdIn(@Param("postIds") List<Long> postIds);
+    int hardDeleteByPostIdIn(@Param("postIds") List<Long> postIds);
 }

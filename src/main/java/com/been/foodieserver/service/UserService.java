@@ -129,8 +129,8 @@ public class UserService {
         likeRepository.deleteByUserIdIn(userLoginIdsToDelete);
         likeRepository.deleteByPostIdIn(userLoginIdsToDelete);
 
-        commentRepository.hardDeleteByUserIdIn(userLoginIdsToDelete);
-        commentRepository.hardDeleteByPostIdIn(postIdsToDelete);
+        commentRepository.deleteByUserIdIn(userLoginIdsToDelete);
+        commentRepository.deleteByPostIdIn(postIdsToDelete);
 
         postRepository.hardDeleteByPostIdIn(postIdsToDelete);
 

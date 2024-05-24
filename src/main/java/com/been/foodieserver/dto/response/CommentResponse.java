@@ -21,7 +21,6 @@ public class CommentResponse {
     private String content;
     private Timestamp createdAt;
     private Timestamp modifiedAt;
-    private Timestamp deletedAt;
 
     public static CommentResponse of(Comment comment) {
         return new CommentResponse(
@@ -31,8 +30,7 @@ public class CommentResponse {
                 Writer.of(comment.getUser()),
                 comment.getContent(),
                 comment.getCreatedAt(),
-                comment.getModifiedAt(),
-                comment.getDeletedAt()
+                comment.getModifiedAt()
         );
     }
 

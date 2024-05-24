@@ -60,17 +60,14 @@ public class CommentService {
         return CommentResponse.of(comment);
     }
 
-    public CommentResponse deleteComment(String loginId, Long postId, Long commentId) {
+    public void deleteComment(String loginId, Long postId, Long commentId) {
         validatePostExistsById(postId);
 
-        Comment comment = commentRepository.findWithUserAndPostAndCategoryByIdAndLoginIdAndPostId(commentId, loginId, postId)
-                .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
+        int resultCount = commentRepository.deleteByIdAndPostIdAndUserLoginId(commentId, postId, loginId);
 
-        comment.delete();
-
-        commentRepository.flush();
-
-        return CommentResponse.of(comment);
+        if (resultCount == 0) {
+            throw new CustomException(ErrorCode.COMMENT_NOT_FOUND);
+        }
     }
 
     private void validatePostExistsById(Long postId) {

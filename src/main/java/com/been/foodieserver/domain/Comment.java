@@ -11,18 +11,16 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
+import org.springframework.data.annotation.LastModifiedDate;
 
+import java.sql.Timestamp;
 import java.util.Objects;
 
 @Getter
 @ToString(callSuper = true)
-@SQLDelete(sql = "UPDATE comments SET deleted_at = NOW() where id = ?")
-@SQLRestriction("deleted_at is NULL")
 @Table(name = "comments")
 @Entity
-public class Comment extends BaseTimeEntity {
+public class Comment extends BaseCreatedAtEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +37,10 @@ public class Comment extends BaseTimeEntity {
     @Column(nullable = false, length = 500)
     private String content;
 
+    @LastModifiedDate
+    @Column(nullable = false)
+    private Timestamp modifiedAt;
+
     protected Comment() {
     }
 
@@ -54,10 +56,6 @@ public class Comment extends BaseTimeEntity {
 
     public void modify(String content) {
         this.content = content;
-    }
-
-    public void delete() {
-        setDeletedAtNow();
     }
 
     @Override

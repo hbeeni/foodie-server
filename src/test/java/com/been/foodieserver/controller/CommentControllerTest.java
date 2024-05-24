@@ -23,16 +23,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -69,7 +67,7 @@ class CommentControllerTest {
 
         CommentResponse response1 = CommentResponse.of(comment1);
         CommentResponse response2 = CommentResponse.of(comment2);
-        
+
         Page<CommentResponse> commentResponsePage = new PageImpl<>(List.of(response2, response1));
 
         int pageNum = 1;
@@ -158,26 +156,20 @@ class CommentControllerTest {
     @Test
     void deleteComment_IfRequestIsValid() throws Exception {
         //Given
-        CommentRequest request = new CommentRequest("modify content");
+        CommentRequest request = new CommentRequest("content");
 
         Post post = PostFixture.get("title", "user1", "자유 게시판");
         User user = UserFixture.get(2L, "user");
         Comment comment = CommentFixture.get(user, post, 1L, request.getContent());
-        ReflectionTestUtils.setField(comment, "deletedAt", Timestamp.valueOf(LocalDateTime.now()));
 
-        CommentResponse response = CommentResponse.of(comment);
-
-        when(commentService.deleteComment(user.getLoginId(), post.getId(), comment.getId())).thenReturn(response);
+        willDoNothing().given(commentService).deleteComment(user.getLoginId(), post.getId(), comment.getId());
 
         //When & Then
         mockMvc.perform(delete(baseUrl + "/posts/" + post.getId() + "/comments/" + comment.getId())
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
-                .andExpect(jsonPath("$.data").exists())
-                .andExpect(jsonPath("$.data.postId").value(response.getPostId()))
-                .andExpect(jsonPath("$.data.content").value(response.getContent()))
-                .andExpect(jsonPath("$.data.deletedAt").isNotEmpty());
+                .andExpect(jsonPath("$.data").doesNotExist());
 
         then(commentService).should().deleteComment(user.getLoginId(), post.getId(), comment.getId());
     }
