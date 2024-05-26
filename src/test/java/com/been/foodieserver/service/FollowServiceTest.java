@@ -5,8 +5,10 @@ import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.response.FollowResponse;
+import com.been.foodieserver.dto.response.FollowerResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.fixture.FollowFixture;
 import com.been.foodieserver.fixture.UserFixture;
 import com.been.foodieserver.repository.FollowRepository;
 import com.been.foodieserver.repository.UserRepository;
@@ -17,6 +19,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +32,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
@@ -58,6 +66,36 @@ class FollowServiceTest {
 
         follower = User.of(followeeLoginId, "pwd", "nick1", Role.USER);
         followee = User.of(followeeLoginId, "pwd", "nick2", Role.USER);
+    }
+
+    @DisplayName("팔로워 목록 조회 요청이 유효하면 팔로워 목록 조회 성공")
+    @Test
+    void getFollowerList_IfRequestIsValid() {
+        //Given
+        String loginId = "user";
+        Follow follow1 = FollowFixture.get(1L, 2L, "follower1", 1L, loginId);
+        Follow follow2 = FollowFixture.get(2L, 3L, "follower2", 1L, loginId);
+
+        int pageNum = 1;
+        int pageSize = 10;
+
+        List<Follow> content = List.of(follow2, follow1);
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
+        Page<Follow> followPage = new PageImpl<>(content, pageable, content.size());
+
+        given(followRepository.findAllWithFollowerAndFolloweeByFollowee_LoginId(eq(loginId), any(Pageable.class))).willReturn(followPage);
+
+        //When
+        Page<FollowerResponse> result = followService.getFollowerList(loginId, pageNum, pageSize);
+
+        //Then
+        assertThat(result).isNotNull();
+        assertThat(result.getTotalElements()).isEqualTo(content.size());
+        assertThat(result.getNumber() + 1).isEqualTo(pageNum);
+        assertThat(result.getSize()).isEqualTo(pageSize);
+        assertThat(result.getContent().get(0).getLoginId()).isEqualTo(follow2.getFollower().getLoginId());
+
+        then(followRepository).should().findAllWithFollowerAndFolloweeByFollowee_LoginId(eq(loginId), any(Pageable.class));
     }
 
     @DisplayName("팔로우할 유저 로그인 아이디가 유효하면 팔로우 성공")

@@ -4,12 +4,17 @@ import com.been.foodieserver.domain.Follow;
 import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.response.FollowResponse;
+import com.been.foodieserver.dto.response.FollowerResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.repository.FollowRepository;
 import com.been.foodieserver.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +30,12 @@ public class FollowService {
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
     private final SseService sseService;
+
+    public Page<FollowerResponse> getFollowerList(String loginId, int pageNum, int pageSize) {
+        Pageable pageable = makePageable(pageNum, pageSize);
+        return followRepository.findAllWithFollowerAndFolloweeByFollowee_LoginId(loginId, pageable)
+                .map(FollowerResponse::of);
+    }
 
     public FollowResponse follow(String followerLoginId, String followeeLoginId) {
         if (followerLoginId.equals(followeeLoginId)) {
@@ -83,5 +94,9 @@ public class FollowService {
     private User getFolloweeOrException(String followeeLoginId) {
         return userRepository.findByLoginId(followeeLoginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.FOLLOWEE_NOT_FOUND));
+    }
+
+    private static PageRequest makePageable(int pageNum, int pageSize) {
+        return PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "id"));
     }
 }

@@ -1,6 +1,8 @@
 package com.been.foodieserver.repository;
 
 import com.been.foodieserver.domain.Follow;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -12,10 +14,16 @@ import java.util.List;
 public interface FollowRepository extends JpaRepository<Follow, Long> {
 
     /**
-     * 팔로우한 유저 조회
+     * 해당 유저가 팔로우한 유저 조회
      */
     @EntityGraph(attributePaths = {"follower", "followee"})
     List<Follow> findAllWithFollowerAndFolloweeByFollower_LoginId(String loginId);
+
+    /**
+     * 해당 유저를 팔로우한 유저 페이징 조회
+     */
+    @EntityGraph(attributePaths = {"follower", "followee"})
+    Page<Follow> findAllWithFollowerAndFolloweeByFollowee_LoginId(String loginId, Pageable pageable);
 
     /**
      * 유저가 팔로우한 사람 수 조회
