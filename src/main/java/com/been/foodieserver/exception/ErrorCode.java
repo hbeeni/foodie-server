@@ -27,6 +27,7 @@ public enum ErrorCode {
     ALREADY_LIKED(HttpStatus.BAD_REQUEST, "이미 좋아요한 게시글입니다."),
     LIKE_NOT_FOUND(HttpStatus.BAD_REQUEST, "좋아요 정보를 찾을 수 없습니다."),
 
+    CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "연결에 실패하였습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "internal server error");
 
     private final HttpStatus status;

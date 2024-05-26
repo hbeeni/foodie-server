@@ -1,6 +1,7 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Comment;
+import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CommentDto;
@@ -27,6 +28,7 @@ public class PostCommentService {
     private final UserService userService;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final SseService sseService;
 
     public Page<CommentResponse> getCommentList(Long postId, int pageNum, int pageSize) {
         validatePostExistsById(postId);
@@ -43,6 +45,12 @@ public class PostCommentService {
         User user = userService.getUserOrException(loginId);
 
         Comment savedComment = commentRepository.save(dto.toEntity(post, user));
+
+        //notification save and event send
+        sseService.saveNotificationAndSendToClient(post.getUser(),
+                NotificationType.NEW_COMMENT_ON_POST,
+                user,
+                post.getId());
 
         return CommentResponse.of(savedComment);
     }

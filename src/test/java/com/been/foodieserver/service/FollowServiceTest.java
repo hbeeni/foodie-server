@@ -1,6 +1,7 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Follow;
+import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.response.FollowResponse;
@@ -38,6 +39,9 @@ class FollowServiceTest {
     @Mock
     private FollowRepository followRepository;
 
+    @Mock
+    private SseService sseService;
+
     @InjectMocks
     private FollowService followService;
 
@@ -64,6 +68,7 @@ class FollowServiceTest {
         given(userRepository.findByLoginId(followeeLoginId)).willReturn(Optional.of(followee));
         given(userRepository.findByLoginId(followerLoginId)).willReturn(Optional.of(follower));
         given(followRepository.save(any(Follow.class))).willReturn(mock(Follow.class));
+        willDoNothing().given(sseService).saveNotificationAndSendToClient(followee, NotificationType.NEW_FOLLOW, follower, followee.getId());
 
         //When
         FollowResponse result = followService.follow(followerLoginId, followeeLoginId);
@@ -77,6 +82,7 @@ class FollowServiceTest {
         then(userRepository).should().findByLoginId(followeeLoginId);
         then(userRepository).should().findByLoginId(followerLoginId);
         then(followRepository).should().save(any(Follow.class));
+        then(sseService).should().saveNotificationAndSendToClient(followee, NotificationType.NEW_FOLLOW, follower, followee.getId());
     }
 
     @DisplayName("팔로우 시 팔로우할 유저 로그인 아이디가 존재하지 않으면 예외 발생")
@@ -94,6 +100,7 @@ class FollowServiceTest {
         //Then
         then(followRepository).should().existsByFollower_LoginIdAndFollowee_LoginId(followerLoginId, followeeLoginId);
         then(userRepository).should().findByLoginId(followeeLoginId);
+        then(sseService).shouldHaveNoInteractions();
     }
 
     @DisplayName("팔로우 시 본인을 팔로우하면 예외 발생")
@@ -111,6 +118,7 @@ class FollowServiceTest {
         //Then
         then(followRepository).shouldHaveNoInteractions();
         then(userRepository).shouldHaveNoInteractions();
+        then(sseService).shouldHaveNoInteractions();
     }
 
     @DisplayName("팔로우 시 이미 팔로우한 유저를 또 팔로우하면 아무 일도 일어나지 않고 결과 반환")
@@ -128,6 +136,7 @@ class FollowServiceTest {
         assertThat(result.getFollowee()).isEqualTo(followeeLoginId);
 
         then(followRepository).should().existsByFollower_LoginIdAndFollowee_LoginId(followerLoginId, followeeLoginId);
+        then(sseService).shouldHaveNoInteractions();
     }
 
     @DisplayName("언팔로우할 유저 로그인 아이디가 유효하면 언팔로우 성공")
