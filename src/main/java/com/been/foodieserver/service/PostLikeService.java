@@ -1,6 +1,7 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Like;
+import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.response.LikeResponse;
@@ -19,6 +20,7 @@ public class PostLikeService {
     private final UserService userService;
     private final PostService postService;
     private final LikeRepository likeRepository;
+    private final SseService sseService;
 
     public LikeResponse like(String loginId, Long postId) {
         if (hasUserLikedPost(loginId, postId)) {
@@ -34,6 +36,12 @@ public class PostLikeService {
         User user = userService.getUserOrException(loginId);
 
         likeRepository.save(Like.of(user, post));
+
+        //notification save and event send
+        sseService.saveNotificationAndSendToClient(post.getUser(),
+                NotificationType.NEW_LIKE_ON_POST,
+                user,
+                post.getId());
 
         return LikeResponse.of(loginId, postId);
     }

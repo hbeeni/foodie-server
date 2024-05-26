@@ -1,6 +1,7 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Comment;
+import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CommentDto;
@@ -32,6 +33,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 
 @ExtendWith(MockitoExtension.class)
 class PostCommentServiceTest {
@@ -44,6 +46,9 @@ class PostCommentServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
+
+    @Mock
+    private SseService sseService;
 
     @InjectMocks
     private PostCommentService postCommentService;
@@ -121,6 +126,7 @@ class PostCommentServiceTest {
         given(postRepository.findWithUserAndCategoryById(post.getId())).willReturn(Optional.of(post));
         given(userService.getUserOrException(user.getLoginId())).willReturn(user);
         given(commentRepository.save(any(Comment.class))).willReturn(comment);
+        willDoNothing().given(sseService).saveNotificationAndSendToClient(post.getUser(), NotificationType.NEW_COMMENT_ON_POST, user, post.getId());
 
         //When
         CommentResponse result = postCommentService.writeComment(user.getLoginId(), post.getId(), commentDto);
@@ -135,6 +141,7 @@ class PostCommentServiceTest {
         then(postRepository).should().findWithUserAndCategoryById(post.getId());
         then(userService).should().getUserOrException(user.getLoginId());
         then(commentRepository).should().save(any(Comment.class));
+        then(sseService).should().saveNotificationAndSendToClient(post.getUser(), NotificationType.NEW_COMMENT_ON_POST, user, post.getId());
     }
 
     @DisplayName("댓글 작성 시 게시글이 존재하지 않으면 예외 발생")
@@ -155,6 +162,7 @@ class PostCommentServiceTest {
         then(postRepository).should().findWithUserAndCategoryById(postId);
         then(userService).shouldHaveNoInteractions();
         then(commentRepository).shouldHaveNoInteractions();
+        then(sseService).shouldHaveNoInteractions();
     }
 
     @DisplayName("댓글 수정 요청이 유효하면 댓글 수정 성공")

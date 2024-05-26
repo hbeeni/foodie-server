@@ -1,6 +1,7 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Follow;
+import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.response.FollowResponse;
 import com.been.foodieserver.exception.CustomException;
@@ -23,6 +24,7 @@ public class FollowService {
 
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
+    private final SseService sseService;
 
     public FollowResponse follow(String followerLoginId, String followeeLoginId) {
         if (followerLoginId.equals(followeeLoginId)) {
@@ -39,6 +41,12 @@ public class FollowService {
         User follower = getFollowerOrException(followerLoginId);
 
         followRepository.save(Follow.of(follower, followee));
+
+        //notification save and event send
+        sseService.saveNotificationAndSendToClient(followee,
+                NotificationType.NEW_FOLLOW,
+                follower,
+                followee.getId());
 
         return response;
     }

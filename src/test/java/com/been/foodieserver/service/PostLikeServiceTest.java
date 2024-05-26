@@ -1,6 +1,7 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Like;
+import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.response.LikeResponse;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +38,9 @@ class PostLikeServiceTest {
 
     @Mock
     private LikeRepository likeRepository;
+
+    @Mock
+    private SseService sseService;
 
     @InjectMocks
     private PostLikeService postLikeService;
@@ -66,6 +71,7 @@ class PostLikeServiceTest {
         given(postService.getPostWithFetchJoinOrException(postId)).willReturn(post);
         given(userService.getUserOrException(loginId)).willReturn(likingUser);
         given(likeRepository.save(any(Like.class))).willReturn(like);
+        willDoNothing().given(sseService).saveNotificationAndSendToClient(post.getUser(), NotificationType.NEW_LIKE_ON_POST, likingUser, post.getId());
 
         //When
         LikeResponse result = postLikeService.like(loginId, postId);
@@ -79,6 +85,7 @@ class PostLikeServiceTest {
         then(postService).should().getPostWithFetchJoinOrException(postId);
         then(userService).should().getUserOrException(loginId);
         then(likeRepository).should().save(any(Like.class));
+        then(sseService).should().saveNotificationAndSendToClient(post.getUser(), NotificationType.NEW_LIKE_ON_POST, likingUser, post.getId());
     }
 
     @DisplayName("좋아요 시 좋아요 한 게시글을 또 좋아요 하면 예외 발생")
@@ -99,6 +106,7 @@ class PostLikeServiceTest {
         then(likeRepository).should().existsByUser_LoginIdAndPost_Id(loginId, postId);
         then(postService).shouldHaveNoInteractions();
         then(userService).shouldHaveNoInteractions();
+        then(sseService).shouldHaveNoInteractions();
     }
 
     @DisplayName("좋아요 시 좋아요한 게시글이 존재하지 않으면 예외 발생")
@@ -120,6 +128,7 @@ class PostLikeServiceTest {
         then(likeRepository).should().existsByUser_LoginIdAndPost_Id(loginId, postId);
         then(postService).should().getPostWithFetchJoinOrException(postId);
         then(userService).shouldHaveNoInteractions();
+        then(sseService).shouldHaveNoInteractions();
     }
 
     @DisplayName("좋아요 시 자신의 글을 좋아요하면 예외 발생")
@@ -141,6 +150,7 @@ class PostLikeServiceTest {
         then(likeRepository).should().existsByUser_LoginIdAndPost_Id(loginId, postId);
         then(postService).should().getPostWithFetchJoinOrException(postId);
         then(userService).shouldHaveNoInteractions();
+        then(sseService).shouldHaveNoInteractions();
     }
 
     @DisplayName("좋아요 취소 요청이 유효하면 게시글 좋아요 취소 성공")
