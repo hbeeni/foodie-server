@@ -30,6 +30,7 @@ public class PostCommentService {
     private final CommentRepository commentRepository;
     private final SseService sseService;
 
+    @Transactional(readOnly = true)
     public Page<CommentResponse> getCommentList(Long postId, int pageNum, int pageSize) {
         validatePostExistsById(postId);
 

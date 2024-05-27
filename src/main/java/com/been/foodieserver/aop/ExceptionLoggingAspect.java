@@ -16,7 +16,7 @@ public class ExceptionLoggingAspect {
         try {
             printLog((Exception) joinPoint.getArgs()[0]);
         } catch (Exception e) {
-            log.error("Error occurs! [LogExceptionAspect: {}]", e.getMessage());
+            log.error("Error occurs! [ExceptionLoggingAspect: {}]", e.getMessage());
         }
     }
 

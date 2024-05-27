@@ -48,7 +48,7 @@ public class UserService {
             throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
-        if (!arePasswordsMatching(userDto.getPassword(), userDto.getConfirmPassword())) {
+        if (arePasswordsNotMatching(userDto.getPassword(), userDto.getConfirmPassword())) {
             throw new CustomException(ErrorCode.PASSWORD_CONFIRM_MISMATCH);
         }
 
@@ -56,25 +56,30 @@ public class UserService {
         slackService.sendAuthLogMessage("[회원가입] userId=" + signUpUser.getLoginId());
     }
 
+    @Transactional(readOnly = true)
     public boolean isLoginIdExist(String loginId) {
         return userRepository.existsByLoginId(loginId);
     }
 
+    @Transactional(readOnly = true)
     public boolean isNicknameExist(String nickname) {
         return userRepository.existsByNickname(nickname);
     }
 
 
+    @Transactional(readOnly = true)
     public Optional<CustomUserDetails> searchUser(String loginId) {
         return userRepository.findByLoginId(loginId).map(CustomUserDetails::from);
     }
 
+    @Transactional(readOnly = true)
     public UserInfoWithStatisticsResponse getMyInfo(String loginId) {
         User user = getUserOrException(loginId);
         UserStatistics userStatistics = getUserStatistics(loginId);
         return UserInfoWithStatisticsResponse.my(user, userStatistics);
     }
 
+    @Transactional(readOnly = true)
     public UserInfoWithStatisticsResponse getUserInfo(String loginId) {
         User user = getUserOrException(loginId);
         UserStatistics userStatistics = getUserStatistics(loginId);
@@ -95,7 +100,7 @@ public class UserService {
     }
 
     public void changePassword(String loginId, String currentPassword, String newPassword, String confirmNewPassword) {
-        if (!arePasswordsMatching(newPassword, confirmNewPassword)) {
+        if (arePasswordsNotMatching(newPassword, confirmNewPassword)) {
             throw new CustomException(ErrorCode.PASSWORD_CONFIRM_MISMATCH);
         }
 
@@ -159,8 +164,8 @@ public class UserService {
         return encoder.matches(currentPassword, user.getPassword());
     }
 
-    private boolean arePasswordsMatching(String password, String confirmPassword) {
-        return password.equals(confirmPassword);
+    private boolean arePasswordsNotMatching(String password, String confirmPassword) {
+        return !password.equals(confirmPassword);
     }
 
     public User getUserOrException(String loginId) {

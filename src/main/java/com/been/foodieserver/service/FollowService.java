@@ -31,6 +31,7 @@ public class FollowService {
     private final FollowRepository followRepository;
     private final SseService sseService;
 
+    @Transactional(readOnly = true)
     public Page<FollowerResponse> getFollowerList(String loginId, int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
         return followRepository.findAllWithFollowerAndFolloweeByFollowee_LoginId(loginId, pageable)
@@ -75,6 +76,7 @@ public class FollowService {
         return FollowResponse.unfollow(followerLoginId, followeeLoginId);
     }
 
+    @Transactional(readOnly = true)
     public Set<String> getFolloweeLoginIds(String loginId) {
         return followRepository.findAllWithFollowerAndFolloweeByFollower_LoginId(loginId).stream()
                 .map(Follow::getFollowee)

@@ -40,16 +40,19 @@ public class PostService {
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> getPostList(int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
         return postRepository.findAllWithUserAndCategory(pageable).map(PostResponse::of);
     }
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> getMyPostList(String loginId, int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
         return postRepository.findAllWithUserAndCategoryByUser_LoginId(pageable, loginId).map(PostResponse::of);
     }
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> getPostListByUserLoginId(String writerLoginId, int pageNum, int pageSize) {
         if (!userService.isLoginIdExist(writerLoginId)) {
             throw new CustomException(ErrorCode.USER_NOT_FOUND);
@@ -62,6 +65,7 @@ public class PostService {
     /**
      * 팔로우한 유저의 게시글 목록 조회
      */
+    @Transactional(readOnly = true)
     public Page<PostResponse> getPostsByFollowees(String loginId, int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
         Set<String> followeeLoginIdSet = followService.getFolloweeLoginIds(loginId);
@@ -76,6 +80,7 @@ public class PostService {
     /**
      * 좋아요한 게시글 목록 조회
      */
+    @Transactional(readOnly = true)
     public Page<PostResponse> getLikedPostList(String loginId, int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
 
@@ -89,6 +94,7 @@ public class PostService {
         return postRepository.findAllWithUserAndCategoryByIdIn(pageable, likedPostIds).map(PostResponse::of);
     }
 
+    @Transactional(readOnly = true)
     public PostResponse getPost(Long postId) {
         Post post = getPostWithFetchJoinOrException(postId);
         return PostResponse.of(post);

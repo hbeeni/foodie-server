@@ -27,6 +27,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public Page<NotificationResponse> getNotificationList(String loginId, int pageNum, int pageSize) {
         Pageable pageable = makePageable(pageNum, pageSize);
         Page<Notification> notifications = notificationRepository.findAllWithReceiverByReceiver_LoginId(pageable, loginId);
