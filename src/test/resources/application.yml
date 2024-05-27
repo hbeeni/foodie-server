@@ -1,0 +1,13 @@
+api:
+  endpoint:
+    base-url: /api/v1
+
+schedules:
+  cron:
+    user:
+      delete: 0/2 * * * * *
+    post:
+      delete: 0/2 * * * * *
+
+slack:
+  token: token
