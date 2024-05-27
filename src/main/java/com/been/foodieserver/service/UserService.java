@@ -48,7 +48,7 @@ public class UserService {
             throw new CustomException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
-        if (!arePasswordsMatching(userDto.getPassword(), userDto.getConfirmPassword())) {
+        if (arePasswordsNotMatching(userDto.getPassword(), userDto.getConfirmPassword())) {
             throw new CustomException(ErrorCode.PASSWORD_CONFIRM_MISMATCH);
         }
 
@@ -100,7 +100,7 @@ public class UserService {
     }
 
     public void changePassword(String loginId, String currentPassword, String newPassword, String confirmNewPassword) {
-        if (!arePasswordsMatching(newPassword, confirmNewPassword)) {
+        if (arePasswordsNotMatching(newPassword, confirmNewPassword)) {
             throw new CustomException(ErrorCode.PASSWORD_CONFIRM_MISMATCH);
         }
 
@@ -164,8 +164,8 @@ public class UserService {
         return encoder.matches(currentPassword, user.getPassword());
     }
 
-    private boolean arePasswordsMatching(String password, String confirmPassword) {
-        return password.equals(confirmPassword);
+    private boolean arePasswordsNotMatching(String password, String confirmPassword) {
+        return !password.equals(confirmPassword);
     }
 
     public User getUserOrException(String loginId) {
