@@ -15,6 +15,7 @@ public class PostSearchService {
 
     private final PostQueryRepository postQueryRepository;
 
+    @Transactional(readOnly = true)
     public Page<PostResponse> search(PostSearchDto dto) {
         return postQueryRepository.findAllByUserLoginIdContainsIgnoreCaseAndTitleContainsIgnoreCase(dto).map(PostResponse::of);
     }

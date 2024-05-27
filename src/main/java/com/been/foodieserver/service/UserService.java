@@ -56,25 +56,30 @@ public class UserService {
         slackService.sendAuthLogMessage("[회원가입] userId=" + signUpUser.getLoginId());
     }
 
+    @Transactional(readOnly = true)
     public boolean isLoginIdExist(String loginId) {
         return userRepository.existsByLoginId(loginId);
     }
 
+    @Transactional(readOnly = true)
     public boolean isNicknameExist(String nickname) {
         return userRepository.existsByNickname(nickname);
     }
 
 
+    @Transactional(readOnly = true)
     public Optional<CustomUserDetails> searchUser(String loginId) {
         return userRepository.findByLoginId(loginId).map(CustomUserDetails::from);
     }
 
+    @Transactional(readOnly = true)
     public UserInfoWithStatisticsResponse getMyInfo(String loginId) {
         User user = getUserOrException(loginId);
         UserStatistics userStatistics = getUserStatistics(loginId);
         return UserInfoWithStatisticsResponse.my(user, userStatistics);
     }
 
+    @Transactional(readOnly = true)
     public UserInfoWithStatisticsResponse getUserInfo(String loginId) {
         User user = getUserOrException(loginId);
         UserStatistics userStatistics = getUserStatistics(loginId);
