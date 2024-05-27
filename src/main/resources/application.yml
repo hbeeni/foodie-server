@@ -22,6 +22,9 @@ schedules:
       delete: 0 0 3 * * *
     post:
       delete: 0 30 3 * * *
+
+slack:
+  token: ${SLACK_TOKEN}
 ---
 spring:
   config.activate.on-profile: local
@@ -35,4 +38,3 @@ spring:
     hibernate:
       ddl-auto: update
   sql.init.mode: always
-
