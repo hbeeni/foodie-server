@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
-@SpringBootTest(properties = {"schedules.cron.user.delete=0/2 * * * * *"})
+@SpringBootTest
 class UserServiceSchedulerTest {
 
     @Autowired

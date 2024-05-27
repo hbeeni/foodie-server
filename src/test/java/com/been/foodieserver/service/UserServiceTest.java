@@ -24,11 +24,11 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +43,9 @@ class UserServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private SlackService slackService;
 
     @Mock
     private PasswordEncoder encoder;
@@ -72,7 +75,8 @@ class UserServiceTest {
         given(userRepository.existsByLoginId(userDto.getLoginId())).willReturn(false);
         given(userRepository.existsByNickname(userDto.getNickname())).willReturn(false);
         given(encoder.encode(userDto.getPassword())).willReturn(user.getPassword());
-        given(userRepository.save(user)).willReturn(any(User.class));
+        given(userRepository.save(user)).willReturn(mock(User.class));
+        willDoNothing().given(slackService).sendAuthLogMessage(anyString());
 
         //When
         userService.signUp(userDto);
@@ -82,6 +86,7 @@ class UserServiceTest {
         verify(userRepository).existsByNickname(user.getNickname());
         verify(encoder).encode(anyString());
         verify(userRepository).save(user);
+        verify(slackService).sendAuthLogMessage(anyString());
     }
 
     @DisplayName("아이디가 중복되면 회원가입 실패")

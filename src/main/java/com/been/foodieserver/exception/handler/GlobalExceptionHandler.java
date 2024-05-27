@@ -4,7 +4,9 @@ package com.been.foodieserver.exception.handler;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.service.SlackService;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +23,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
+@RequiredArgsConstructor
 @RestControllerAdvice(annotations = RestController.class)
 public class GlobalExceptionHandler {
+
+    private final SlackService slackService;
 
     @ExceptionHandler({ConstraintViolationException.class, TypeMismatchException.class, HttpMessageConversionException.class})
     public ResponseEntity<ApiResponse<Void>> handleWebException(Exception ex) {
@@ -63,7 +68,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleException() {
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
+        slackService.sendErrorLogMessage("[internal server error] " + ex.getMessage());
         return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }

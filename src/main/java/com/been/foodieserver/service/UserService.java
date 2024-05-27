@@ -37,6 +37,7 @@ public class UserService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
+    private final SlackService slackService;
 
     public void signUp(UserDto userDto) {
         if (isLoginIdExist(userDto.getLoginId())) {
@@ -51,7 +52,8 @@ public class UserService {
             throw new CustomException(ErrorCode.PASSWORD_CONFIRM_MISMATCH);
         }
 
-        userRepository.save(userDto.toEntity(encoder.encode(userDto.getPassword())));
+        User signUpUser = userRepository.save(userDto.toEntity(encoder.encode(userDto.getPassword())));
+        slackService.sendAuthLogMessage("[회원가입] userId=" + signUpUser.getLoginId());
     }
 
     public boolean isLoginIdExist(String loginId) {
