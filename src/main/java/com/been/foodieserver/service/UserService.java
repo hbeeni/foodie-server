@@ -139,6 +139,15 @@ public class UserService {
         return UserInfoResponse.my(user);
     }
 
+    public void deleteProfileImage(String loginId) {
+        User user = getUserOrException(loginId);
+
+        if (user.hasProfileImage()) {
+            imageService.delete(user.getProfileImage());
+            user.deleteProfileImage();
+        }
+    }
+
     /**
      * 매일 3시 탈퇴한 지 30일이 지난 사용자 삭제
      */

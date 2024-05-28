@@ -71,6 +71,10 @@ public class User extends BaseTimeEntity {
         setDeletedAtNow();
     }
 
+    public void deleteProfileImage() {
+        this.profileImage = null;
+    }
+
     public boolean hasProfileImage() {
         return getProfileImage() != null;
     }

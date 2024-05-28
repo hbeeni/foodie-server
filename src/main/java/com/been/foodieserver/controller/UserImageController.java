@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,5 +36,11 @@ public class UserImageController {
             return ResponseEntity.status(ErrorCode.IMAGE_UPLOAD_FAIL.getStatus())
                     .body(ApiResponse.error(ErrorCode.IMAGE_UPLOAD_FAIL.getMessage()));
         }
+    }
+
+    @DeleteMapping
+    public ResponseEntity<ApiResponse<Void>> deleteProfileImage(@AuthenticationPrincipal UserDetails userDetails) {
+        userService.deleteProfileImage(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }
