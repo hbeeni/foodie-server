@@ -14,6 +14,8 @@ public enum ErrorCode {
     PASSWORD_CONFIRM_MISMATCH(HttpStatus.BAD_REQUEST, "비밀번호와 비밀번호 확인이 일치하지 않습니다."),
     USER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "사용자를 찾을 수 없습니다."),
     AUTH_FAIL(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."),
+    ATTACH_IMAGE(HttpStatus.BAD_REQUEST, "이미지를 첨부해주세요."),
+    NOT_SUPPORTED_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "이미지는 jpg, jpeg, png 형식만 업로드할 수 있습니다."),
 
     FOLLOW_NOT_FOUND(HttpStatus.BAD_REQUEST, "팔로우 정보를 찾을 수 없습니다."),
     FOLLOWEE_NOT_FOUND(HttpStatus.BAD_REQUEST, "팔로우할 사용자를 찾을 수 없습니다."),
@@ -27,6 +29,7 @@ public enum ErrorCode {
     ALREADY_LIKED(HttpStatus.BAD_REQUEST, "이미 좋아요한 게시글입니다."),
     LIKE_NOT_FOUND(HttpStatus.BAD_REQUEST, "좋아요 정보를 찾을 수 없습니다."),
 
+    IMAGE_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패하였습니다."),
     CONNECTION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "연결에 실패하였습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "internal server error");
 

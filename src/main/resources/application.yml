@@ -23,6 +23,10 @@ schedules:
     post:
       delete: 0 30 3 * * *
 
+images:
+  dir:
+    user-profile: ${USER_PROFILE_IMAGE_DIR}
+
 slack:
   token: ${SLACK_TOKEN}
 ---

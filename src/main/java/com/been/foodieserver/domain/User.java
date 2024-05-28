@@ -34,6 +34,9 @@ public class User extends BaseTimeEntity {
     @Column(nullable = false, unique = true, length = 20)
     private String nickname;
 
+    @Column(length = 100)
+    private String profileImage;
+
     @Enumerated(EnumType.STRING)
     @Column(columnDefinition = "varchar(20) not null")
     private Role role;
@@ -56,12 +59,20 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
     }
 
+    public void updateProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
     public void changePassword(String newPassword) {
         this.password = newPassword;
     }
 
     public void withdraw() {
         setDeletedAtNow();
+    }
+
+    public boolean hasProfileImage() {
+        return getProfileImage() != null;
     }
 
     @Override
