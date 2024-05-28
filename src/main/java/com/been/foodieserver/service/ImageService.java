@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
 import net.coobird.thumbnailator.geometry.Positions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,8 +15,10 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 @Slf4j
@@ -26,6 +30,21 @@ public class ImageService {
 
     private static final String PNG_TYPE = "image/png";
     private static final String JPEG_TYPE = "image/jpeg";
+
+    public Resource get(String imageName) {
+        try {
+            Path file = Paths.get(userProfileImageDir).resolve(imageName);
+            Resource resource = new UrlResource(file.toUri());
+
+            if (!resource.exists() && !resource.isReadable()) {
+                throw new CustomException(ErrorCode.NOT_FOUND_IMAGE);
+            }
+
+            return resource;
+        } catch (MalformedURLException e) {
+            throw new CustomException(ErrorCode.NOT_FOUND_IMAGE);
+        }
+    }
 
     public String save(MultipartFile file) throws IOException {
         if (file.isEmpty()) {

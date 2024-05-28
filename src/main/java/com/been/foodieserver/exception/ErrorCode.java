@@ -16,6 +16,7 @@ public enum ErrorCode {
     AUTH_FAIL(HttpStatus.UNAUTHORIZED, "로그인이 필요합니다."),
     ATTACH_IMAGE(HttpStatus.BAD_REQUEST, "이미지를 첨부해주세요."),
     NOT_SUPPORTED_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "이미지는 jpg, jpeg, png 형식만 업로드할 수 있습니다."),
+    NOT_FOUND_IMAGE(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다."),
 
     FOLLOW_NOT_FOUND(HttpStatus.BAD_REQUEST, "팔로우 정보를 찾을 수 없습니다."),
     FOLLOWEE_NOT_FOUND(HttpStatus.BAD_REQUEST, "팔로우할 사용자를 찾을 수 없습니다."),
