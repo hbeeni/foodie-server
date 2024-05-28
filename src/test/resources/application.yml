@@ -9,5 +9,13 @@ schedules:
     post:
       delete: 0/2 * * * * *
 
+images:
+  dir:
+    user-profile: path
+
 slack:
   token: token
+
+spring:
+  jpa:
+    show-sql: true

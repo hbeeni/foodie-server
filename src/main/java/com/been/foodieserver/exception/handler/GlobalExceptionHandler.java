@@ -71,6 +71,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
         slackService.sendErrorLogMessage("[internal server error] " + ex.getMessage());
         return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
-                .body(ApiResponse.fail(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
+                .body(ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }
 }

@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -38,6 +39,7 @@ public class UserService {
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
     private final SlackService slackService;
+    private final ImageService imageService;
 
     public void signUp(UserDto userDto) {
         if (isLoginIdExist(userDto.getLoginId())) {
@@ -99,6 +101,21 @@ public class UserService {
         return UserInfoResponse.my(user);
     }
 
+    public void uploadProfileImage(String loginId, String imageName) {
+        if (!StringUtils.hasText(imageName)) {
+            return;
+        }
+
+        User user = getUserOrException(loginId);
+
+        //이미 프로필 이미지가 있으면 삭제
+        if (user.hasProfileImage()) {
+            imageService.delete(user.getProfileImage());
+        }
+
+        user.updateProfileImage(imageName);
+    }
+
     public void changePassword(String loginId, String currentPassword, String newPassword, String confirmNewPassword) {
         if (arePasswordsNotMatching(newPassword, confirmNewPassword)) {
             throw new CustomException(ErrorCode.PASSWORD_CONFIRM_MISMATCH);
@@ -120,6 +137,15 @@ public class UserService {
         userRepository.flush();
 
         return UserInfoResponse.my(user);
+    }
+
+    public void deleteProfileImage(String loginId) {
+        User user = getUserOrException(loginId);
+
+        if (user.hasProfileImage()) {
+            imageService.delete(user.getProfileImage());
+            user.deleteProfileImage();
+        }
     }
 
     /**

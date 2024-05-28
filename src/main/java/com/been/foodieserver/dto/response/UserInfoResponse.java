@@ -16,6 +16,7 @@ public class UserInfoResponse {
     private Long id;
     private String loginId;
     private String nickname;
+    private String profileImageName;
     private String role;
     private Timestamp createdAt;
     private Timestamp modifiedAt;
@@ -25,6 +26,7 @@ public class UserInfoResponse {
         return new UserInfoResponse(user.getId(),
                 user.getLoginId(),
                 user.getNickname(),
+                user.getProfileImage(),
                 user.getRole().getRoleName(),
                 user.getCreatedAt(),
                 user.getModifiedAt(),
@@ -35,6 +37,7 @@ public class UserInfoResponse {
         return new UserInfoResponse(user.getId(),
                 user.getLoginId(),
                 user.getNickname(),
+                user.getProfileImage(),
                 null,
                 null,
                 null,
