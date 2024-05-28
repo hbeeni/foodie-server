@@ -56,6 +56,10 @@ public class ApiResponse<T> {
         return new ApiResponse<>(STATUS_FAIL, ex.getLocalizedMessage(), null);
     }
 
+    public static <T> ApiResponse<T> error(String message) {
+        return new ApiResponse<>(STATUS_FAIL, message, null);
+    }
+
     @Getter
     @AllArgsConstructor(access = AccessLevel.PRIVATE)
     public static class Pagination {
