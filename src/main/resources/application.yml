@@ -2,6 +2,17 @@ logging:
   level:
     org.hibernate.orm.jdbc.bind: TRACE
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
+
 spring:
   application.name: foodieserver
   jpa:
