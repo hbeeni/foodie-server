@@ -3,10 +3,12 @@ package com.been.foodieserver.service;
 import com.been.foodieserver.domain.Follow;
 import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.User;
+import com.been.foodieserver.dto.NotificationEventDto;
 import com.been.foodieserver.dto.response.FollowResponse;
 import com.been.foodieserver.dto.response.FollowerResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.producer.NotificationProducer;
 import com.been.foodieserver.repository.FollowRepository;
 import com.been.foodieserver.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class FollowService {
 
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
-    private final SseService sseService;
+    private final NotificationProducer notificationProducer;
 
     @Transactional(readOnly = true)
     public Page<FollowerResponse> getFollowerList(String loginId, int pageNum, int pageSize) {
@@ -54,11 +56,11 @@ public class FollowService {
 
         followRepository.save(Follow.of(follower, followee));
 
-        //notification save and event send
-        sseService.saveNotificationAndSendToClient(followee,
+        //event send
+        notificationProducer.send(NotificationEventDto.of(followee,
                 NotificationType.NEW_FOLLOW,
                 follower,
-                followee.getId());
+                followee.getId()));
 
         return response;
     }

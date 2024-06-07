@@ -1,15 +1,16 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Follow;
-import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
+import com.been.foodieserver.dto.NotificationEventDto;
 import com.been.foodieserver.dto.response.FollowResponse;
 import com.been.foodieserver.dto.response.FollowerResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.fixture.FollowFixture;
 import com.been.foodieserver.fixture.UserFixture;
+import com.been.foodieserver.producer.NotificationProducer;
 import com.been.foodieserver.repository.FollowRepository;
 import com.been.foodieserver.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +49,7 @@ class FollowServiceTest {
     private FollowRepository followRepository;
 
     @Mock
-    private SseService sseService;
+    private NotificationProducer notificationProducer;
 
     @InjectMocks
     private FollowService followService;
@@ -64,8 +65,8 @@ class FollowServiceTest {
         followerLoginId = "follower";
         followeeLoginId = "followee";
 
-        follower = User.of(followeeLoginId, "pwd", "nick1", Role.USER);
-        followee = User.of(followeeLoginId, "pwd", "nick2", Role.USER);
+        follower = User.of(followeeLoginId, "pwd", "nick1", null, Role.USER);
+        followee = User.of(followeeLoginId, "pwd", "nick2", null, Role.USER);
     }
 
     @DisplayName("팔로워 목록 조회 요청이 유효하면 팔로워 목록 조회 성공")
@@ -106,7 +107,7 @@ class FollowServiceTest {
         given(userRepository.findByLoginId(followeeLoginId)).willReturn(Optional.of(followee));
         given(userRepository.findByLoginId(followerLoginId)).willReturn(Optional.of(follower));
         given(followRepository.save(any(Follow.class))).willReturn(mock(Follow.class));
-        willDoNothing().given(sseService).saveNotificationAndSendToClient(followee, NotificationType.NEW_FOLLOW, follower, followee.getId());
+        willDoNothing().given(notificationProducer).send(any(NotificationEventDto.class));
 
         //When
         FollowResponse result = followService.follow(followerLoginId, followeeLoginId);
@@ -120,7 +121,7 @@ class FollowServiceTest {
         then(userRepository).should().findByLoginId(followeeLoginId);
         then(userRepository).should().findByLoginId(followerLoginId);
         then(followRepository).should().save(any(Follow.class));
-        then(sseService).should().saveNotificationAndSendToClient(followee, NotificationType.NEW_FOLLOW, follower, followee.getId());
+        then(notificationProducer).should().send(any(NotificationEventDto.class));
     }
 
     @DisplayName("팔로우 시 팔로우할 유저 로그인 아이디가 존재하지 않으면 예외 발생")
@@ -138,7 +139,7 @@ class FollowServiceTest {
         //Then
         then(followRepository).should().existsByFollower_LoginIdAndFollowee_LoginId(followerLoginId, followeeLoginId);
         then(userRepository).should().findByLoginId(followeeLoginId);
-        then(sseService).shouldHaveNoInteractions();
+        then(notificationProducer).shouldHaveNoInteractions();
     }
 
     @DisplayName("팔로우 시 본인을 팔로우하면 예외 발생")
@@ -156,7 +157,7 @@ class FollowServiceTest {
         //Then
         then(followRepository).shouldHaveNoInteractions();
         then(userRepository).shouldHaveNoInteractions();
-        then(sseService).shouldHaveNoInteractions();
+        then(notificationProducer).shouldHaveNoInteractions();
     }
 
     @DisplayName("팔로우 시 이미 팔로우한 유저를 또 팔로우하면 아무 일도 일어나지 않고 결과 반환")
@@ -174,7 +175,7 @@ class FollowServiceTest {
         assertThat(result.getFollowee()).isEqualTo(followeeLoginId);
 
         then(followRepository).should().existsByFollower_LoginIdAndFollowee_LoginId(followerLoginId, followeeLoginId);
-        then(sseService).shouldHaveNoInteractions();
+        then(notificationProducer).shouldHaveNoInteractions();
     }
 
     @DisplayName("언팔로우할 유저 로그인 아이디가 유효하면 언팔로우 성공")

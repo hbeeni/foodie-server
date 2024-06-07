@@ -49,7 +49,7 @@ class NotificationControllerTest {
     @BeforeEach
     void setUp() {
         notificationApi = baseUrl + "/notifications";
-        receiver = User.of("receiver", "pwd", "receiver", Role.USER);
+        receiver = User.of("receiver", "pwd", "receiver", null, Role.USER);
     }
 
     @WithMockUser("receiver")

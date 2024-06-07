@@ -145,7 +145,7 @@ class UserControllerTest {
         String loginId = "loginid";
         String password = "password12";
 
-        User user = User.of(loginId, encoder.encode(password), null, Role.USER);
+        User user = User.of(loginId, encoder.encode(password), null, null, Role.USER);
         CustomUserDetails customUserDetails = CustomUserDetails.from(user);
 
         given(userService.searchUser(loginId)).willReturn(Optional.of(customUserDetails));
@@ -200,7 +200,7 @@ class UserControllerTest {
     void getMyInfo_IfLoggedIn() throws Exception {
         //Given
         String loginId = "user1";
-        User user = User.of(loginId, null, "nickname", Role.USER);
+        User user = User.of(loginId, null, "nickname", null, Role.USER);
         UserStatistics userStatistics = UserStatistics.of(1, 1, 1);
 
         UserInfoWithStatisticsResponse userInfoWithStatisticsResponse = UserInfoWithStatisticsResponse.my(user, userStatistics);
@@ -247,7 +247,7 @@ class UserControllerTest {
     void getUserInfo_IfUserLoginIdExists() throws Exception {
         //Given
         String loginId = "others";
-        User user = User.of(loginId, null, "nickname", Role.USER);
+        User user = User.of(loginId, null, "nickname", null, Role.USER);
         UserStatistics userStatistics = UserStatistics.of(1, 1, 1);
 
         UserInfoWithStatisticsResponse userInfoWithStatisticsResponse = UserInfoWithStatisticsResponse.others(user, userStatistics);
@@ -300,7 +300,7 @@ class UserControllerTest {
         String nickname = "nickname";
 
         UserInfoModifyRequest request = new UserInfoModifyRequest(nickname);
-        User user = User.of(loginId, null, nickname, Role.USER);
+        User user = User.of(loginId, null, nickname, null, Role.USER);
         UserInfoResponse response = UserInfoResponse.my(user);
 
         given(userService.modifyMyInfo(eq(loginId), any(UserDto.class))).willReturn(response);
@@ -354,7 +354,7 @@ class UserControllerTest {
     void deleteUser_IfRequestIsValid() throws Exception {
         //Given
         String loginId = "user";
-        User user = User.of(loginId, null, "nickname", Role.USER);
+        User user = User.of(loginId, null, "nickname", null, Role.USER);
         ReflectionTestUtils.setField(user, "deletedAt", Timestamp.from(Instant.now()));
         UserInfoResponse response = UserInfoResponse.my(user);
 

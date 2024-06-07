@@ -2,12 +2,14 @@ package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
+import com.been.foodieserver.dto.SlackEventDto;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.dto.response.UserInfoResponse;
 import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse;
 import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse.UserStatistics;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.producer.SlackProducer;
 import com.been.foodieserver.repository.CommentRepository;
 import com.been.foodieserver.repository.FollowRepository;
 import com.been.foodieserver.repository.LikeRepository;
@@ -26,6 +28,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static com.been.foodieserver.service.SlackService.SlackChannel;
+
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
@@ -38,7 +42,7 @@ public class UserService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final LikeRepository likeRepository;
-    private final SlackService slackService;
+    private final SlackProducer slackProducer;
     private final ImageService imageService;
 
     public void signUp(UserDto userDto) {
@@ -55,7 +59,7 @@ public class UserService {
         }
 
         User signUpUser = userRepository.save(userDto.toEntity(encoder.encode(userDto.getPassword())));
-        slackService.sendAuthLogMessage("[회원가입] userId=" + signUpUser.getLoginId());
+        slackProducer.send(SlackEventDto.of(SlackChannel.AUTH, "[회원가입] userId=" + signUpUser.getLoginId()));
     }
 
     @Transactional(readOnly = true)

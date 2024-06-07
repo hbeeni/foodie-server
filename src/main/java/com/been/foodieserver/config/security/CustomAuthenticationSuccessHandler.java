@@ -1,6 +1,8 @@
 package com.been.foodieserver.config.security;
 
+import com.been.foodieserver.dto.SlackEventDto;
 import com.been.foodieserver.dto.response.ApiResponse;
+import com.been.foodieserver.producer.SlackProducer;
 import com.been.foodieserver.service.SlackService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
@@ -20,11 +22,12 @@ import java.io.IOException;
 public class CustomAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private final ObjectMapper mapper;
-    private final SlackService slackService;
+    private final SlackProducer slackProducer;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
-        slackService.sendAuthLogMessage("[로그인] userId=" + ((UserDetails) authentication.getPrincipal()).getUsername());
+        slackProducer.send(SlackEventDto.of(SlackService.SlackChannel.AUTH, "[로그인] userId=" + ((UserDetails) authentication.getPrincipal()).getUsername()));
+        
         response.setStatus(HttpStatus.OK.value());
         response.setContentType("application/json");
         response.setCharacterEncoding("utf-8");

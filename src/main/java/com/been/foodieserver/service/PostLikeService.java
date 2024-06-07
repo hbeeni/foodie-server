@@ -4,9 +4,11 @@ import com.been.foodieserver.domain.Like;
 import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
+import com.been.foodieserver.dto.NotificationEventDto;
 import com.been.foodieserver.dto.response.LikeResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.producer.NotificationProducer;
 import com.been.foodieserver.repository.LikeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ public class PostLikeService {
     private final UserService userService;
     private final PostService postService;
     private final LikeRepository likeRepository;
-    private final SseService sseService;
+    private final NotificationProducer notificationProducer;
 
     public LikeResponse like(String loginId, Long postId) {
         if (hasUserLikedPost(loginId, postId)) {
@@ -37,11 +39,11 @@ public class PostLikeService {
 
         likeRepository.save(Like.of(user, post));
 
-        //notification save and event send
-        sseService.saveNotificationAndSendToClient(post.getUser(),
+        //event send
+        notificationProducer.send(NotificationEventDto.of(post.getUser(),
                 NotificationType.NEW_LIKE_ON_POST,
                 user,
-                post.getId());
+                post.getId()));
 
         return LikeResponse.of(loginId, postId);
     }

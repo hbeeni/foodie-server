@@ -19,3 +19,19 @@ slack:
 spring:
   jpa:
     show-sql: true
+  kafka:
+    properties:
+      spring.json.trusted.packages: com.been.foodieserver.dto
+    bootstrap-servers: localhost:9092
+    consumer:
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+      ack-mode: manual
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    topic:
+      notification: notification
+      slack: slack

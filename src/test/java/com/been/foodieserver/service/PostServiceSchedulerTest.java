@@ -46,7 +46,7 @@ class PostServiceSchedulerTest {
 
     @BeforeEach
     void setUp() {
-        user = User.of("user", "pwd", "nick1", Role.USER);
+        user = User.of("user", "pwd", "nick1", null, Role.USER);
         userRepository.saveAndFlush(user);
 
         category = Category.of("category", null);

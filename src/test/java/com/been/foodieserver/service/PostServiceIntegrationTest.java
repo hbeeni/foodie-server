@@ -57,8 +57,8 @@ class PostServiceIntegrationTest {
     @Test
     void hardDeletePostsDeleted7DaysAgoAndRelatedData() {
         //Given
-        User user = User.of("user", "pwd", "nick1", Role.USER);
-        User user2 = User.of("user2", "pwd", "nick2", Role.USER);
+        User user = User.of("user", "pwd", "nick1", null, Role.USER);
+        User user2 = User.of("user2", "pwd", "nick2", null, Role.USER);
         userRepository.saveAll(List.of(user, user2));
 
         Category category = Category.of("category", null);

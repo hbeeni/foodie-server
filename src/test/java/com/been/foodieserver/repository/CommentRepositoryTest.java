@@ -40,7 +40,7 @@ class CommentRepositoryTest {
 
     @BeforeEach
     public void setUp() {
-        user = User.of("user", "pwd", "user", Role.USER);
+        user = User.of("user", "pwd", "user", null, Role.USER);
         em.persist(user);
 
         category = Category.of("category", null);

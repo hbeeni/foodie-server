@@ -1,16 +1,17 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Comment;
-import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CommentDto;
+import com.been.foodieserver.dto.NotificationEventDto;
 import com.been.foodieserver.dto.response.CommentResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.fixture.CommentFixture;
 import com.been.foodieserver.fixture.PostFixture;
 import com.been.foodieserver.fixture.UserFixture;
+import com.been.foodieserver.producer.NotificationProducer;
 import com.been.foodieserver.repository.CommentRepository;
 import com.been.foodieserver.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +49,7 @@ class PostCommentServiceTest {
     private CommentRepository commentRepository;
 
     @Mock
-    private SseService sseService;
+    private NotificationProducer notificationProducer;
 
     @InjectMocks
     private PostCommentService postCommentService;
@@ -126,7 +127,7 @@ class PostCommentServiceTest {
         given(postRepository.findWithUserAndCategoryById(post.getId())).willReturn(Optional.of(post));
         given(userService.getUserOrException(user.getLoginId())).willReturn(user);
         given(commentRepository.save(any(Comment.class))).willReturn(comment);
-        willDoNothing().given(sseService).saveNotificationAndSendToClient(post.getUser(), NotificationType.NEW_COMMENT_ON_POST, user, post.getId());
+        willDoNothing().given(notificationProducer).send(any(NotificationEventDto.class));
 
         //When
         CommentResponse result = postCommentService.writeComment(user.getLoginId(), post.getId(), commentDto);
@@ -141,7 +142,7 @@ class PostCommentServiceTest {
         then(postRepository).should().findWithUserAndCategoryById(post.getId());
         then(userService).should().getUserOrException(user.getLoginId());
         then(commentRepository).should().save(any(Comment.class));
-        then(sseService).should().saveNotificationAndSendToClient(post.getUser(), NotificationType.NEW_COMMENT_ON_POST, user, post.getId());
+        then(notificationProducer).should().send(any(NotificationEventDto.class));
     }
 
     @DisplayName("댓글 작성 시 게시글이 존재하지 않으면 예외 발생")
@@ -162,7 +163,7 @@ class PostCommentServiceTest {
         then(postRepository).should().findWithUserAndCategoryById(postId);
         then(userService).shouldHaveNoInteractions();
         then(commentRepository).shouldHaveNoInteractions();
-        then(sseService).shouldHaveNoInteractions();
+        then(notificationProducer).shouldHaveNoInteractions();
     }
 
     @DisplayName("댓글 수정 요청이 유효하면 댓글 수정 성공")

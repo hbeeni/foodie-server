@@ -62,11 +62,11 @@ class UserServiceIntegrationTest {
     @Test
     void hardDeleteUsersWithdrawn30DaysAgoAndRelatedData() {
         //Given
-        User user1 = User.of("user1", "pwd", "nick1", Role.USER);
-        User user2 = User.of("user2", "pwd", "nick2", Role.USER); //delete
-        User user3 = User.of("user3", "pwd", "nick3", Role.USER); //delete
-        User user4 = User.of("user4", "pwd", "nick4", Role.USER); //delete
-        User user5 = User.of("user5", "pwd", "nick5", Role.USER);
+        User user1 = User.of("user1", "pwd", "nick1", null, Role.USER);
+        User user2 = User.of("user2", "pwd", "nick2", null, Role.USER); //delete
+        User user3 = User.of("user3", "pwd", "nick3", null, Role.USER); //delete
+        User user4 = User.of("user4", "pwd", "nick4", null, Role.USER); //delete
+        User user5 = User.of("user5", "pwd", "nick5", null, Role.USER);
 
         ReflectionTestUtils.setField(user1, "deletedAt", Timestamp.valueOf(LocalDateTime.now().minusDays(29)));
         ReflectionTestUtils.setField(user2, "deletedAt", Timestamp.valueOf(LocalDateTime.now().minusDays(30)));

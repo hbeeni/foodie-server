@@ -3,11 +3,13 @@ package com.been.foodieserver.service;
 import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
+import com.been.foodieserver.dto.SlackEventDto;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.dto.response.UserInfoResponse;
 import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.producer.SlackProducer;
 import com.been.foodieserver.repository.FollowRepository;
 import com.been.foodieserver.repository.PostRepository;
 import com.been.foodieserver.repository.UserRepository;
@@ -24,6 +26,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -45,7 +48,7 @@ class UserServiceTest {
     private PostRepository postRepository;
 
     @Mock
-    private SlackService slackService;
+    private SlackProducer slackProducer;
 
     @Mock
     private PasswordEncoder encoder;
@@ -65,7 +68,7 @@ class UserServiceTest {
                 .confirmPassword("password12")
                 .nickname("user1")
                 .build();
-        user = User.of(userDto.getLoginId(), "encodedPwd", userDto.getNickname(), Role.USER);
+        user = User.of(userDto.getLoginId(), "encodedPwd", userDto.getNickname(), null, Role.USER);
     }
 
     @DisplayName("회원 정보가 유효하면 회원가입 성공")
@@ -76,7 +79,7 @@ class UserServiceTest {
         given(userRepository.existsByNickname(userDto.getNickname())).willReturn(false);
         given(encoder.encode(userDto.getPassword())).willReturn(user.getPassword());
         given(userRepository.save(user)).willReturn(mock(User.class));
-        willDoNothing().given(slackService).sendAuthLogMessage(anyString());
+        willDoNothing().given(slackProducer).send(any(SlackEventDto.class));
 
         //When
         userService.signUp(userDto);
@@ -86,7 +89,7 @@ class UserServiceTest {
         verify(userRepository).existsByNickname(user.getNickname());
         verify(encoder).encode(anyString());
         verify(userRepository).save(user);
-        verify(slackService).sendAuthLogMessage(anyString());
+        verify(slackProducer).send(any(SlackEventDto.class));
     }
 
     @DisplayName("아이디가 중복되면 회원가입 실패")
@@ -350,7 +353,7 @@ class UserServiceTest {
         String currentPassword = "current12";
         String newPassword = "newpwd12";
         String encodedPassword = "encodedpwd12";
-        User user = User.of("user1", userPassword, "nickname", Role.USER);
+        User user = User.of("user1", userPassword, "nickname", null, Role.USER);
 
         given(userRepository.findByLoginId(user.getLoginId())).willReturn(Optional.of(user));
         given(encoder.matches(currentPassword, userPassword)).willReturn(true);
@@ -390,7 +393,7 @@ class UserServiceTest {
         String loginId = "user1";
         String currentPassword = "different12";
         String newPassword = "newpwd12";
-        User user = User.of(loginId, "current12", "nickname", Role.USER);
+        User user = User.of(loginId, "current12", "nickname", null, Role.USER);
 
         given(userRepository.findByLoginId(user.getLoginId())).willReturn(Optional.of(user));
         given(encoder.matches(currentPassword, user.getPassword())).willReturn(false);
