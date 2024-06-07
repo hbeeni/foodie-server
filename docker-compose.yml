@@ -1,0 +1,17 @@
+services:
+  foodie-zookeeper:
+    container_name: foodie-zookeeper
+    image: wurstmeister/zookeeper
+    ports:
+      - "2181:2181"
+  foodie-kafka:
+    container_name: foodie-kafka
+    image: wurstmeister/kafka
+    depends_on: foodie-zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ZOOKEEPER_CONNECT: foodie-zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock

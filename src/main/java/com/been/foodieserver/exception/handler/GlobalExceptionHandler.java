@@ -1,9 +1,11 @@
 package com.been.foodieserver.exception.handler;
 
 
+import com.been.foodieserver.dto.SlackEventDto;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.producer.SlackProducer;
 import com.been.foodieserver.service.SlackService;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,7 @@ import java.util.Map;
 @RestControllerAdvice(annotations = RestController.class)
 public class GlobalExceptionHandler {
 
-    private final SlackService slackService;
+    private final SlackProducer slackProducer;
 
     @ExceptionHandler({ConstraintViolationException.class, TypeMismatchException.class, HttpMessageConversionException.class})
     public ResponseEntity<ApiResponse<Void>> handleWebException(Exception ex) {
@@ -69,7 +71,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
-        slackService.sendErrorLogMessage("[internal server error] " + ex.getMessage());
+        slackProducer.send(SlackEventDto.of(SlackService.SlackChannel.ERROR, "[internal server error] " + ex.getMessage()));
         return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }

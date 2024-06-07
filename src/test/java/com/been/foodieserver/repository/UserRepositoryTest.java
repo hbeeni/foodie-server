@@ -31,7 +31,7 @@ class UserRepositoryTest {
     @Test
     void returnTrue_IfSearchedNicknameIsDuplicateWithOtherUsers() {
         //Given
-        User user1 = User.of("user1", "pwd", "nick1", Role.USER);
+        User user1 = User.of("user1", "pwd", "nick1", null, Role.USER);
         userRepository.saveAndFlush(user1);
 
         //When
@@ -45,7 +45,7 @@ class UserRepositoryTest {
     @Test
     void returnFalse_IfSearchedNicknameIsNotDuplicateWithOtherUsers() {
         //Given
-        User user1 = User.of("user1", "pwd", "nick1", Role.USER);
+        User user1 = User.of("user1", "pwd", "nick1", null, Role.USER);
         userRepository.saveAndFlush(user1);
 
         //When
@@ -59,9 +59,9 @@ class UserRepositoryTest {
     @Test
     void getIndexesOfUsersSoftDeletedMoreThan2DaysAgo() {
         //Given
-        User user1 = User.of("user1", "pwd", "nick1", Role.USER);
-        User user2 = User.of("user2", "pwd", "nick2", Role.USER);
-        User user3 = User.of("user3", "pwd", "nick3", Role.USER);
+        User user1 = User.of("user1", "pwd", "nick1", null, Role.USER);
+        User user2 = User.of("user2", "pwd", "nick2", null, Role.USER);
+        User user3 = User.of("user3", "pwd", "nick3", null, Role.USER);
 
         ReflectionTestUtils.setField(user1, "deletedAt", Timestamp.valueOf(LocalDateTime.now().minusDays(1)));
         ReflectionTestUtils.setField(user2, "deletedAt", Timestamp.valueOf(LocalDateTime.now().minusDays(2)));

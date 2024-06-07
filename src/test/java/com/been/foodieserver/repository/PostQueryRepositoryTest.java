@@ -57,8 +57,8 @@ class PostQueryRepositoryTest {
     @ParameterizedTest
     void findPostPageByWriterIdAndTitleContaining(String searchLoginId, String searchTitle, List<String> expected) {
         //Given
-        User user1 = User.of("writer1", "pwd", "writer1", Role.USER);
-        User user2 = User.of("writer2", "pwd", "writer2", Role.USER);
+        User user1 = User.of("writer1", "pwd", "writer1", null, Role.USER);
+        User user2 = User.of("writer2", "pwd", "writer2", null, Role.USER);
         userRepository.saveAllAndFlush(List.of(user1, user2));
 
         Category category = Category.of("category", null);

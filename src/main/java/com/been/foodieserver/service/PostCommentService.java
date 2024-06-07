@@ -5,9 +5,11 @@ import com.been.foodieserver.domain.NotificationType;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CommentDto;
+import com.been.foodieserver.dto.NotificationEventDto;
 import com.been.foodieserver.dto.response.CommentResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.producer.NotificationProducer;
 import com.been.foodieserver.repository.CommentRepository;
 import com.been.foodieserver.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +30,7 @@ public class PostCommentService {
     private final UserService userService;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
-    private final SseService sseService;
+    private final NotificationProducer notificationProducer;
 
     @Transactional(readOnly = true)
     public Page<CommentResponse> getCommentList(Long postId, int pageNum, int pageSize) {
@@ -47,11 +49,11 @@ public class PostCommentService {
 
         Comment savedComment = commentRepository.save(dto.toEntity(post, user));
 
-        //notification save and event send
-        sseService.saveNotificationAndSendToClient(post.getUser(),
+        //event send
+        notificationProducer.send(NotificationEventDto.of(post.getUser(),
                 NotificationType.NEW_COMMENT_ON_POST,
                 user,
-                post.getId());
+                post.getId()));
 
         return CommentResponse.of(savedComment);
     }

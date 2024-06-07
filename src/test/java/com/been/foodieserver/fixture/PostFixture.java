@@ -17,7 +17,7 @@ public class PostFixture {
     }
 
     public static Post get(Long postId, String title, String content, String loginId, String categoryName) {
-        User user = User.of(loginId, "pwd", loginId, Role.USER);
+        User user = User.of(loginId, "pwd", loginId, null, Role.USER);
         Category category = Category.of(categoryName, null);
         Post post = Post.of(user, category, title, content);
 

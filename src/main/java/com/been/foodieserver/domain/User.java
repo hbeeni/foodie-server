@@ -7,8 +7,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -17,10 +19,13 @@ import java.util.Objects;
 @Getter
 @ToString(callSuper = true)
 @SQLRestriction("deleted_at is NULL")
-@Table(name = "users")
+@Table(name = "users", indexes = {
+        @Index(name = "IDX_users_loginId", columnList = "login_id")
+})
 @Entity
 public class User extends BaseTimeEntity {
 
+    @Setter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -44,15 +49,16 @@ public class User extends BaseTimeEntity {
     protected User() {
     }
 
-    private User(String loginId, String password, String nickname, Role role) {
+    private User(String loginId, String password, String nickname, String profileImage, Role role) {
         this.loginId = loginId;
         this.password = password;
         this.nickname = nickname;
+        this.profileImage = profileImage;
         this.role = role;
     }
 
-    public static User of(String loginId, String password, String nickname, Role role) {
-        return new User(loginId, password, nickname, role);
+    public static User of(String loginId, String password, String nickname, String profileImage, Role role) {
+        return new User(loginId, password, nickname, profileImage, role);
     }
 
     public void modifyInfo(String nickname) {
