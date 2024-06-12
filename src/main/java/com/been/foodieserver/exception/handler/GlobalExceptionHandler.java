@@ -1,12 +1,10 @@
 package com.been.foodieserver.exception.handler;
 
 
-import com.been.foodieserver.dto.SlackEventDto;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.producer.SlackProducer;
-import com.been.foodieserver.service.SlackService;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +69,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleException(Exception ex) {
-        slackProducer.send(SlackEventDto.of(SlackService.SlackChannel.ERROR, "[internal server error] " + ex.getMessage()));
+//        slackProducer.send(SlackEventDto.of(SlackService.SlackChannel.ERROR, "[internal server error] " + ex.getMessage()));
         return ResponseEntity.status(ErrorCode.INTERNAL_SERVER_ERROR.getStatus())
                 .body(ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR.getMessage()));
     }

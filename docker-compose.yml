@@ -1,17 +1,65 @@
 services:
-  foodie-zookeeper:
-    container_name: foodie-zookeeper
+  app:
+    container_name: app
+    image: bzzni/foodie-app
+    build: .
+    volumes:
+      - ./logs:/foodie-sns/logs
+    depends_on:
+      - kafka
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SLACK_TOKEN=${SLACK_TOKEN}
+      - USER_PROFILE_IMAGE_DIR=${USER_PROFILE_IMAGE_DIR}
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9093
+    ports:
+      - "80:8080"
+    restart: on-failure
+  zookeeper:
+    container_name: zookeeper
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
-  foodie-kafka:
-    container_name: foodie-kafka
+    restart: on-failure
+  kafka:
+    container_name: kafka
     image: wurstmeister/kafka
-    depends_on: foodie-zookeeper
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - zookeeper
     ports:
       - "9092:9092"
     environment:
-      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
-      KAFKA_ZOOKEEPER_CONNECT: foodie-zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9093,OUTSIDE://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+    restart: on-failure
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    user: root
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - ./monitoring/prometheus/config:/etc/prometheus
+      - ./monitoring/prometheus/volume:/prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    restart: always
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    user: root
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./monitoring/grafana/volume:/var/lib/grafana
+    restart: always

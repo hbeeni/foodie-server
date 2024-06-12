@@ -36,6 +36,8 @@ dependencies {
     implementation 'com.slack.api:bolt-jetty:1.18.0'
     //image
     implementation 'net.coobird:thumbnailator:0.4.20'
+    //log4jdbc
+    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
 
     compileOnly 'org.projectlombok:lombok'
     runtimeOnly 'com.h2database:h2'
@@ -49,6 +51,10 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+}
+
+bootJar {
+    archiveFileName = 'app.jar'
 }
 
 tasks.named('test') {
