@@ -23,7 +23,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private static final String[] WHITE_LIST = {
-            "/api/*/users/sign-up", "/api/*/users/id/exists", "/api/*/users/nickname/exists", "/actuator/**"
+            "/api/*/users/sign-up", "/api/*/users/id/exists", "/api/*/users/nickname/exists", "/manage/**"
     };
 
     @Bean

@@ -174,4 +174,7 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/java,gradle,intellij+all,windows
 
 ### Custom ###
-/images
+/images/**.jpg
+/monitoring/prometheus/volume
+/monitoring/grafana
+.env
