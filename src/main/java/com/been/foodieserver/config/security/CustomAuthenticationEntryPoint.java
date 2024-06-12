@@ -23,8 +23,8 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        log.error("authentication entry point called! {}", authException.getMessage());
-        
+        log.error("[{}] {}", request.getRequestURI(), authException.getMessage());
+
         ErrorCode errorCode = ErrorCode.AUTH_FAIL;
 
         response.setStatus(errorCode.getStatus().value());

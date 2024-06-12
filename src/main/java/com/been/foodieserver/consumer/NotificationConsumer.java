@@ -17,7 +17,7 @@ public class NotificationConsumer {
 
     @KafkaListener(topics = "${spring.kafka.topic.notification}", groupId = "notification")
     public void consume(NotificationEventDto eventDto, Acknowledgment ack) {
-        log.info("[consume the event] {}", eventDto);
+        log.info("[consume the event] [{}] {} -> {}:{}", eventDto.getType().name(), eventDto.getFromUser().getLoginId(), eventDto.getReceiver().getLoginId(), eventDto.getTargetId());
         sseService.saveNotificationAndSendToClient(eventDto.getReceiver().toEntity(),
                 eventDto.getType(),
                 eventDto.getFromUser().toEntity(),
