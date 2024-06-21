@@ -5,6 +5,7 @@ services:
     build: .
     volumes:
       - ./logs:/foodie-sns/logs
+      - ./images:/foodie-sns/images
     depends_on:
       - kafka
       - redis
