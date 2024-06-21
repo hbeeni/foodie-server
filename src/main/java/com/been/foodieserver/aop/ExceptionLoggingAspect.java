@@ -21,6 +21,6 @@ public class ExceptionLoggingAspect {
     }
 
     private static void printLog(Exception ex) {
-        log.error("Error occurs! [{}: {}]", ex.getClass().getSimpleName(), ex.getMessage());
+        log.error("Error occurs! [{}: {}]", ex.getClass().getSimpleName(), ex.getMessage(), ex);
     }
 }
