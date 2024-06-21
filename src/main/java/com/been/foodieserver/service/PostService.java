@@ -8,6 +8,7 @@ import com.been.foodieserver.dto.PostDto;
 import com.been.foodieserver.dto.response.PostResponse;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.producer.PostProducer;
 import com.been.foodieserver.repository.CategoryRepository;
 import com.been.foodieserver.repository.CommentRepository;
 import com.been.foodieserver.repository.LikeRepository;
@@ -39,6 +40,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final PostProducer postProducer;
 
     @Transactional(readOnly = true)
     public Page<PostResponse> getPostList(int pageNum, int pageSize) {
@@ -105,6 +107,7 @@ public class PostService {
         User user = userService.getUserOrException(loginId);
 
         Post savedPost = postRepository.save(dto.toEntity(user, category));
+        postProducer.send(savedPost);
 
         return PostResponse.of(user, category, savedPost);
     }

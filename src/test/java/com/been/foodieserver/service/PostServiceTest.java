@@ -10,6 +10,7 @@ import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.fixture.PostFixture;
 import com.been.foodieserver.fixture.UserFixture;
+import com.been.foodieserver.producer.PostProducer;
 import com.been.foodieserver.repository.CategoryRepository;
 import com.been.foodieserver.repository.LikeRepository;
 import com.been.foodieserver.repository.PostRepository;
@@ -55,6 +56,9 @@ class PostServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private PostProducer postProducer;
 
     @InjectMocks
     private PostService postService;
@@ -369,6 +373,7 @@ class PostServiceTest {
         given(categoryRepository.findById(category.getId())).willReturn(Optional.of(category));
         given(userService.getUserOrException(user.getLoginId())).willReturn(user);
         given(postRepository.save(any(Post.class))).willReturn(post);
+        willDoNothing().given(postProducer).send(post);
 
         //When
         PostResponse result = postService.writePost(user.getLoginId(), postDto);
@@ -383,6 +388,7 @@ class PostServiceTest {
         then(categoryRepository).should().findById(category.getId());
         then(userService).should().getUserOrException(user.getLoginId());
         then(postRepository).should().save(any(Post.class));
+        then(postProducer).should().send(post);
     }
 
     @DisplayName("게시글 작성 시 카테고리가 존재하지 않으면 예외 발생")
