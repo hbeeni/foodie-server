@@ -4,6 +4,7 @@ import com.been.foodieserver.config.security.CustomAuthenticationEntryPoint;
 import com.been.foodieserver.config.security.CustomAuthenticationFailureHandler;
 import com.been.foodieserver.config.security.CustomAuthenticationSuccessHandler;
 import com.been.foodieserver.config.security.CustomLogoutSuccessHandler;
+import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.service.UserService;
@@ -44,6 +45,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers(WHITE_LIST).permitAll()
+                        .requestMatchers("/refresh/**").hasRole(Role.ADMIN.getRoleName())
                         .anyRequest().authenticated())
                 .exceptionHandling(config -> config
                         .authenticationEntryPoint(authenticationEntryPoint))
