@@ -1,4 +1,9 @@
 services:
+  local-redis:
+    container_name: local-redis
+    image: redis:7
+    ports:
+      - "6379:6379"
   local-zookeeper:
     container_name: local-zookeeper
     image: wurstmeister/zookeeper

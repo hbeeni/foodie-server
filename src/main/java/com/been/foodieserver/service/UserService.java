@@ -15,6 +15,7 @@ import com.been.foodieserver.repository.FollowRepository;
 import com.been.foodieserver.repository.LikeRepository;
 import com.been.foodieserver.repository.PostRepository;
 import com.been.foodieserver.repository.UserRepository;
+import com.been.foodieserver.repository.cache.UserCacheRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -44,6 +45,7 @@ public class UserService {
     private final LikeRepository likeRepository;
     private final SlackProducer slackProducer;
     private final ImageService imageService;
+    private final UserCacheRepository userCacheRepository;
 
     public void signUp(UserDto userDto) {
         if (isLoginIdExist(userDto.getLoginId())) {
@@ -59,12 +61,14 @@ public class UserService {
         }
 
         User signUpUser = userRepository.save(userDto.toEntity(encoder.encode(userDto.getPassword())));
+        userCacheRepository.save(signUpUser);
+
         slackProducer.send(SlackEventDto.of(SlackChannel.AUTH, "[회원가입] userId=" + signUpUser.getLoginId()));
     }
 
     @Transactional(readOnly = true)
     public boolean isLoginIdExist(String loginId) {
-        return userRepository.existsByLoginId(loginId);
+        return userCacheRepository.existsByLoginId(loginId);
     }
 
     @Transactional(readOnly = true)
@@ -75,7 +79,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public Optional<CustomUserDetails> searchUser(String loginId) {
-        return userRepository.findByLoginId(loginId).map(CustomUserDetails::from);
+        return userCacheRepository.findByLoginId(loginId).map(CustomUserDetails::from);
     }
 
     @Transactional(readOnly = true)
@@ -102,6 +106,7 @@ public class UserService {
 
         userRepository.flush();
 
+        userCacheRepository.modify(user);
         return UserInfoResponse.my(user);
     }
 
@@ -118,6 +123,7 @@ public class UserService {
         }
 
         user.updateProfileImage(imageName);
+        userCacheRepository.modify(user);
     }
 
     public void changePassword(String loginId, String currentPassword, String newPassword, String confirmNewPassword) {
@@ -132,6 +138,7 @@ public class UserService {
         }
 
         user.changePassword(encoder.encode(newPassword));
+        userCacheRepository.modify(user);
     }
 
     public UserInfoResponse deleteUser(String loginId) {
@@ -139,6 +146,7 @@ public class UserService {
         user.withdraw();
 
         userRepository.flush();
+        userCacheRepository.deleteByLoginId(user.getLoginId());
 
         return UserInfoResponse.my(user);
     }
@@ -149,6 +157,7 @@ public class UserService {
         if (user.hasProfileImage()) {
             imageService.delete(user.getProfileImage());
             user.deleteProfileImage();
+            userCacheRepository.modify(user);
         }
     }
 
@@ -199,7 +208,7 @@ public class UserService {
     }
 
     public User getUserOrException(String loginId) {
-        return userRepository.findByLoginId(loginId)
+        return userCacheRepository.findByLoginId(loginId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
     }
 }

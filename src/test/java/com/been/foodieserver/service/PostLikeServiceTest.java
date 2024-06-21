@@ -12,6 +12,7 @@ import com.been.foodieserver.fixture.PostFixture;
 import com.been.foodieserver.fixture.UserFixture;
 import com.been.foodieserver.producer.NotificationProducer;
 import com.been.foodieserver.repository.LikeRepository;
+import com.been.foodieserver.repository.cache.LikeCacheRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,9 @@ class PostLikeServiceTest {
     private LikeRepository likeRepository;
 
     @Mock
+    private LikeCacheRepository likeCacheRepository;
+
+    @Mock
     private NotificationProducer notificationProducer;
 
     @InjectMocks
@@ -68,10 +72,11 @@ class PostLikeServiceTest {
         long postId = post.getId();
         String loginId = likingUser.getLoginId();
 
-        given(likeRepository.existsByUser_LoginIdAndPost_Id(loginId, postId)).willReturn(false);
+        given(likeCacheRepository.existsByUserLoginIdAndPostId(loginId, postId)).willReturn(false);
         given(postService.getPostWithFetchJoinOrException(postId)).willReturn(post);
         given(userService.getUserOrException(loginId)).willReturn(likingUser);
         given(likeRepository.save(any(Like.class))).willReturn(like);
+        willDoNothing().given(likeCacheRepository).save(any(Like.class));
         willDoNothing().given(notificationProducer).send(any(NotificationEventDto.class));
 
         //When
@@ -82,10 +87,11 @@ class PostLikeServiceTest {
         assertThat(result.getUserLoginId()).isEqualTo(loginId);
         assertThat(result.getPostId()).isEqualTo(postId);
 
-        then(likeRepository).should().existsByUser_LoginIdAndPost_Id(loginId, postId);
+        then(likeCacheRepository).should().existsByUserLoginIdAndPostId(loginId, postId);
         then(postService).should().getPostWithFetchJoinOrException(postId);
         then(userService).should().getUserOrException(loginId);
         then(likeRepository).should().save(any(Like.class));
+        then(likeCacheRepository).should().save(any(Like.class));
         then(notificationProducer).should().send(any(NotificationEventDto.class));
     }
 
@@ -96,7 +102,7 @@ class PostLikeServiceTest {
         long postId = post.getId();
         String loginId = post.getUser().getLoginId();
 
-        given(likeRepository.existsByUser_LoginIdAndPost_Id(loginId, postId)).willReturn(true);
+        given(likeCacheRepository.existsByUserLoginIdAndPostId(loginId, postId)).willReturn(true);
 
         //When
         assertThatThrownBy(() -> postLikeService.like(loginId, postId))
@@ -104,7 +110,7 @@ class PostLikeServiceTest {
                 .hasMessage(ErrorCode.ALREADY_LIKED.getMessage());
 
         //Then
-        then(likeRepository).should().existsByUser_LoginIdAndPost_Id(loginId, postId);
+        then(likeCacheRepository).should().existsByUserLoginIdAndPostId(loginId, postId);
         then(postService).shouldHaveNoInteractions();
         then(userService).shouldHaveNoInteractions();
         then(notificationProducer).shouldHaveNoInteractions();
@@ -117,7 +123,7 @@ class PostLikeServiceTest {
         long postId = post.getId();
         String loginId = likingUser.getLoginId();
 
-        given(likeRepository.existsByUser_LoginIdAndPost_Id(loginId, postId)).willReturn(false);
+        given(likeCacheRepository.existsByUserLoginIdAndPostId(loginId, postId)).willReturn(false);
         given(postService.getPostWithFetchJoinOrException(postId)).willThrow(new CustomException(ErrorCode.POST_NOT_FOUND));
 
         //When
@@ -126,7 +132,7 @@ class PostLikeServiceTest {
                 .hasMessage(ErrorCode.POST_NOT_FOUND.getMessage());
 
         //Then
-        then(likeRepository).should().existsByUser_LoginIdAndPost_Id(loginId, postId);
+        then(likeCacheRepository).should().existsByUserLoginIdAndPostId(loginId, postId);
         then(postService).should().getPostWithFetchJoinOrException(postId);
         then(userService).shouldHaveNoInteractions();
         then(notificationProducer).shouldHaveNoInteractions();
@@ -139,7 +145,7 @@ class PostLikeServiceTest {
         long postId = post.getId();
         String loginId = post.getUser().getLoginId();
 
-        given(likeRepository.existsByUser_LoginIdAndPost_Id(loginId, postId)).willReturn(false);
+        given(likeCacheRepository.existsByUserLoginIdAndPostId(loginId, postId)).willReturn(false);
         given(postService.getPostWithFetchJoinOrException(postId)).willReturn(post);
 
         //When
@@ -148,7 +154,7 @@ class PostLikeServiceTest {
                 .hasMessage(ErrorCode.LIKE_OWN_POST.getMessage());
 
         //Then
-        then(likeRepository).should().existsByUser_LoginIdAndPost_Id(loginId, postId);
+        then(likeCacheRepository).should().existsByUserLoginIdAndPostId(loginId, postId);
         then(postService).should().getPostWithFetchJoinOrException(postId);
         then(userService).shouldHaveNoInteractions();
         then(notificationProducer).shouldHaveNoInteractions();
@@ -162,12 +168,14 @@ class PostLikeServiceTest {
         String loginId = likingUser.getLoginId();
 
         when(likeRepository.deleteByUserLoginIdAndPostId(loginId, postId)).thenReturn(1);
+        willDoNothing().given(likeCacheRepository).deleteByUserLoginIdAndPostId(loginId, postId);
 
         //When
         postLikeService.unlike(loginId, postId);
 
         //Then
         then(likeRepository).should().deleteByUserLoginIdAndPostId(loginId, postId);
+        then(likeCacheRepository).should().deleteByUserLoginIdAndPostId(loginId, postId);
     }
 
     @DisplayName("좋아요 취소 시 취소하려는 좋아요가 존재하지 않으면 예외 발생")
@@ -185,5 +193,6 @@ class PostLikeServiceTest {
                 .hasMessage(ErrorCode.LIKE_NOT_FOUND.getMessage());
 
         then(likeRepository).should().deleteByUserLoginIdAndPostId(loginId, postId);
+        then(likeCacheRepository).shouldHaveNoInteractions();
     }
 }

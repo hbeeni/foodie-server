@@ -35,3 +35,4 @@ spring:
     topic:
       notification: notification
       slack: slack
+      post: post.created

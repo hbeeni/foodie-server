@@ -10,6 +10,7 @@ import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.producer.NotificationProducer;
 import com.been.foodieserver.repository.LikeRepository;
+import com.been.foodieserver.repository.cache.LikeCacheRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,7 @@ public class PostLikeService {
     private final UserService userService;
     private final PostService postService;
     private final LikeRepository likeRepository;
+    private final LikeCacheRepository likeCacheRepository;
     private final NotificationProducer notificationProducer;
 
     public LikeResponse like(String loginId, Long postId) {
@@ -37,7 +39,9 @@ public class PostLikeService {
 
         User user = userService.getUserOrException(loginId);
 
-        likeRepository.save(Like.of(user, post));
+        Like like = Like.of(user, post);
+        likeRepository.save(like);
+        likeCacheRepository.save(like); //redis save
 
         //event send
         notificationProducer.send(NotificationEventDto.of(post.getUser(),
@@ -54,9 +58,11 @@ public class PostLikeService {
         if (resultCount == 0) {
             throw new CustomException(ErrorCode.LIKE_NOT_FOUND);
         }
+
+        likeCacheRepository.deleteByUserLoginIdAndPostId(loginId, postId); //redis delete
     }
 
     private boolean hasUserLikedPost(String loginId, Long postId) {
-        return likeRepository.existsByUser_LoginIdAndPost_Id(loginId, postId);
+        return likeCacheRepository.existsByUserLoginIdAndPostId(loginId, postId);
     }
 }

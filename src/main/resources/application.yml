@@ -41,7 +41,7 @@ spring:
     password: ${LOCAL_DB_PASSWORD}
   kafka:
     properties:
-      spring.json.trusted.packages: com.been.foodieserver.dto
+      spring.json.trusted.packages: com.been.foodieserver.dto,com.been.foodieserver.domain
     bootstrap-servers: localhost:9092
     consumer:
       auto-offset-reset: latest
@@ -55,3 +55,4 @@ spring:
     topic:
       notification: notification
       slack: slack
+      post: post.created

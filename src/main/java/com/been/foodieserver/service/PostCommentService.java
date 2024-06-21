@@ -12,6 +12,7 @@ import com.been.foodieserver.exception.ErrorCode;
 import com.been.foodieserver.producer.NotificationProducer;
 import com.been.foodieserver.repository.CommentRepository;
 import com.been.foodieserver.repository.PostRepository;
+import com.been.foodieserver.repository.cache.CommentCacheRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,7 @@ public class PostCommentService {
     private final UserService userService;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final CommentCacheRepository commentCacheRepository;
     private final NotificationProducer notificationProducer;
 
     @Transactional(readOnly = true)
@@ -48,6 +50,7 @@ public class PostCommentService {
         User user = userService.getUserOrException(loginId);
 
         Comment savedComment = commentRepository.save(dto.toEntity(post, user));
+        commentCacheRepository.saveId(savedComment); //redis save
 
         //event send
         notificationProducer.send(NotificationEventDto.of(post.getUser(),
@@ -79,6 +82,8 @@ public class PostCommentService {
         if (resultCount == 0) {
             throw new CustomException(ErrorCode.COMMENT_NOT_FOUND);
         }
+        
+        commentCacheRepository.deleteByPostIdAndId(postId, commentId); //redis delete
     }
 
     private void validatePostExistsById(Long postId) {

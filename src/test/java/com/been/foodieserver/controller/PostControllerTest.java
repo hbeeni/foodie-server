@@ -1,6 +1,7 @@
 package com.been.foodieserver.controller;
 
 import com.been.foodieserver.domain.Post;
+import com.been.foodieserver.dto.PageDto;
 import com.been.foodieserver.dto.PostDto;
 import com.been.foodieserver.dto.request.PostWriteRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
@@ -69,15 +70,14 @@ class PostControllerTest {
         Post post1 = PostFixture.get("title1", "user", "자유 게시판");
         Post post2 = PostFixture.get("title2", "user", "자유 게시판");
 
-        PostResponse postResponse1 = PostResponse.of(post1);
-        PostResponse postResponse2 = PostResponse.of(post2);
-
-        Page<PostResponse> postResponsePage = new PageImpl<>(List.of(postResponse2, postResponse1));
+        List<PostResponse> content = List.of(PostResponse.of(post2), PostResponse.of(post1));
 
         int pageNum = 1;
-        int pageSize = postResponsePage.getSize();
+        int pageSize = content.size();
 
-        when(postService.getPostList(pageNum, pageSize)).thenReturn(postResponsePage);
+        PageDto<PostResponse> postPageDto = PageDto.of(pageNum, pageSize, content.size(), content);
+
+        when(postService.getPostList(pageNum, pageSize)).thenReturn(postPageDto);
 
         //When & Then
         mockMvc.perform(get(postApi)

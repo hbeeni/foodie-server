@@ -5,8 +5,10 @@ services:
     build: .
     volumes:
       - ./logs:/foodie-sns/logs
+      - ./images:/foodie-sns/images
     depends_on:
       - kafka
+      - redis
     environment:
       - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
       - DB_HOST=${DB_HOST}
@@ -17,9 +19,16 @@ services:
       - SLACK_TOKEN=${SLACK_TOKEN}
       - USER_PROFILE_IMAGE_DIR=${USER_PROFILE_IMAGE_DIR}
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9093
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
     ports:
       - "80:8080"
     restart: on-failure
+  redis:
+    container_name: redis
+    image: redis:7
+    ports:
+      - "6379:6379"
   zookeeper:
     container_name: zookeeper
     image: wurstmeister/zookeeper
