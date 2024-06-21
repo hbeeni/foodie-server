@@ -4,6 +4,7 @@ import com.been.foodieserver.domain.Category;
 import com.been.foodieserver.domain.Like;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
+import com.been.foodieserver.dto.PageDto;
 import com.been.foodieserver.dto.PostDto;
 import com.been.foodieserver.dto.response.PostResponse;
 import com.been.foodieserver.exception.CustomException;
@@ -13,6 +14,7 @@ import com.been.foodieserver.repository.CategoryRepository;
 import com.been.foodieserver.repository.CommentRepository;
 import com.been.foodieserver.repository.LikeRepository;
 import com.been.foodieserver.repository.PostRepository;
+import com.been.foodieserver.repository.cache.PostCacheRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,14 +40,14 @@ public class PostService {
     private final FollowService followService;
     private final CategoryRepository categoryRepository;
     private final PostRepository postRepository;
+    private final PostCacheRepository postCacheRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
     private final PostProducer postProducer;
 
     @Transactional(readOnly = true)
-    public Page<PostResponse> getPostList(int pageNum, int pageSize) {
-        Pageable pageable = makePageable(pageNum, pageSize);
-        return postRepository.findAllWithUserAndCategory(pageable).map(PostResponse::of);
+    public PageDto<PostResponse> getPostList(int pageNum, int pageSize) {
+        return postCacheRepository.findAll(pageNum, pageSize);
     }
 
     @Transactional(readOnly = true)
@@ -121,6 +123,7 @@ public class PostService {
 
         postRepository.flush();
 
+        postCacheRepository.modify(post);
         return PostResponse.of(user, category, post);
     }
 
@@ -129,6 +132,7 @@ public class PostService {
         post.delete();
 
         postRepository.flush();
+        postCacheRepository.deleteById(postId);
 
         return PostResponse.of(post);
     }

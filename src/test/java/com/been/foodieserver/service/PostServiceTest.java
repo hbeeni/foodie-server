@@ -4,6 +4,7 @@ import com.been.foodieserver.domain.Category;
 import com.been.foodieserver.domain.Like;
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.User;
+import com.been.foodieserver.dto.PageDto;
 import com.been.foodieserver.dto.PostDto;
 import com.been.foodieserver.dto.response.PostResponse;
 import com.been.foodieserver.exception.CustomException;
@@ -14,6 +15,7 @@ import com.been.foodieserver.producer.PostProducer;
 import com.been.foodieserver.repository.CategoryRepository;
 import com.been.foodieserver.repository.LikeRepository;
 import com.been.foodieserver.repository.PostRepository;
+import com.been.foodieserver.repository.cache.PostCacheRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,6 +60,9 @@ class PostServiceTest {
     private PostRepository postRepository;
 
     @Mock
+    private PostCacheRepository postCacheRepository;
+
+    @Mock
     private PostProducer postProducer;
 
     @InjectMocks
@@ -88,25 +93,26 @@ class PostServiceTest {
         Post post1 = PostFixture.get("title1", "user", "자유 게시판");
         Post post2 = PostFixture.get("title2", "user", "자유 게시판");
 
-        List<Post> content = List.of(post2, post1);
-        Page<Post> postPage = new PageImpl<>(content);
+        List<PostResponse> content = List.of(PostResponse.of(post2), PostResponse.of(post1));
 
         int pageNum = 1;
         int pageSize = content.size();
 
-        given(postRepository.findAllWithUserAndCategory(any(Pageable.class))).willReturn(postPage);
+        PageDto<PostResponse> postPageDto = PageDto.of(pageNum, pageSize, content.size(), content);
+
+        given(postCacheRepository.findAll(pageNum, pageSize)).willReturn(postPageDto);
 
         //When
-        Page<PostResponse> result = postService.getPostList(pageNum, pageSize);
+        PageDto<PostResponse> result = postService.getPostList(pageNum, pageSize);
 
         //Then
         assertThat(result).isNotNull();
         assertThat(result.getTotalElements()).isEqualTo(content.size());
-        assertThat(result.getNumber() + 1).isEqualTo(pageNum);
-        assertThat(result.getSize()).isEqualTo(pageSize);
+        assertThat(result.getCurrentPage()).isEqualTo(pageNum);
+        assertThat(result.getPageSize()).isEqualTo(pageSize);
         assertThat(result.getContent().get(0).getTitle()).isEqualTo(post2.getTitle());
 
-        then(postRepository).should().findAllWithUserAndCategory(any(Pageable.class));
+        then(postCacheRepository).should().findAll(pageNum, pageSize);
         then(userService).shouldHaveNoInteractions();
         then(categoryRepository).shouldHaveNoInteractions();
     }
@@ -427,6 +433,7 @@ class PostServiceTest {
         given(postRepository.findByIdAndUser_LoginId(post.getId(), user.getLoginId())).willReturn(Optional.of(post));
         given(userService.getUserOrException(user.getLoginId())).willReturn(user);
         willDoNothing().given(postRepository).flush();
+        willDoNothing().given(postCacheRepository).modify(post);
 
         //When
         PostResponse result = postService.modifyPost(user.getLoginId(), post.getId(), postDto);
@@ -444,6 +451,7 @@ class PostServiceTest {
         then(postRepository).should().findByIdAndUser_LoginId(post.getId(), user.getLoginId());
         then(userService).should().getUserOrException(user.getLoginId());
         then(postRepository).should().flush();
+        then(postCacheRepository).should().modify(post);
     }
 
     @DisplayName("게시글 수정 시 카테고리가 존재하지 않으면 예외 발생")
@@ -492,21 +500,25 @@ class PostServiceTest {
     @Test
     void deletePost_IfRequestIsValid() {
         //Given
-        given(postRepository.findWithUserAndCategoryByIdAndUser_LoginId(post.getId(), user.getLoginId())).willReturn(Optional.of(post));
+        Long postId = post.getId();
+
+        given(postRepository.findWithUserAndCategoryByIdAndUser_LoginId(postId, user.getLoginId())).willReturn(Optional.of(post));
         willDoNothing().given(postRepository).flush();
+        willDoNothing().given(postCacheRepository).deleteById(postId);
 
         //When
-        PostResponse result = postService.deletePost(user.getLoginId(), post.getId());
+        PostResponse result = postService.deletePost(user.getLoginId(), postId);
 
         //Then
         assertThat(result).isNotNull();
-        assertThat(result.getPostId()).isEqualTo(post.getId());
+        assertThat(result.getPostId()).isEqualTo(postId);
         assertThat(result.getWriter()).isNotNull();
         assertThat(result.getTitle()).isNotNull();
         assertThat(result.getDeletedAt()).isNotNull();
 
-        then(postRepository).should().findWithUserAndCategoryByIdAndUser_LoginId(post.getId(), user.getLoginId());
+        then(postRepository).should().findWithUserAndCategoryByIdAndUser_LoginId(postId, user.getLoginId());
         then(postRepository).should().flush();
+        then(postCacheRepository).should().deleteById(postId);
         then(categoryRepository).shouldHaveNoInteractions();
         then(userService).shouldHaveNoInteractions();
     }

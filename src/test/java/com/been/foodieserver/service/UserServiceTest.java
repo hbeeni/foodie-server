@@ -13,6 +13,7 @@ import com.been.foodieserver.producer.SlackProducer;
 import com.been.foodieserver.repository.FollowRepository;
 import com.been.foodieserver.repository.PostRepository;
 import com.been.foodieserver.repository.UserRepository;
+import com.been.foodieserver.repository.cache.UserCacheRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserCacheRepository userCacheRepository;
 
     @Mock
     private FollowRepository followRepository;
@@ -75,20 +79,22 @@ class UserServiceTest {
     @Test
     void signUp_IfUserIsValid() {
         //Given
-        given(userRepository.existsByLoginId(userDto.getLoginId())).willReturn(false);
+        given(userCacheRepository.existsByLoginId(userDto.getLoginId())).willReturn(false);
         given(userRepository.existsByNickname(userDto.getNickname())).willReturn(false);
         given(encoder.encode(userDto.getPassword())).willReturn(user.getPassword());
         given(userRepository.save(user)).willReturn(mock(User.class));
+        willDoNothing().given(userCacheRepository).save(any(User.class));
         willDoNothing().given(slackProducer).send(any(SlackEventDto.class));
 
         //When
         userService.signUp(userDto);
 
         //Then
-        verify(userRepository).existsByLoginId(user.getLoginId());
+        verify(userCacheRepository).existsByLoginId(user.getLoginId());
         verify(userRepository).existsByNickname(user.getNickname());
         verify(encoder).encode(anyString());
         verify(userRepository).save(user);
+        verify(userCacheRepository).save(any(User.class));
         verify(slackProducer).send(any(SlackEventDto.class));
     }
 
@@ -96,27 +102,29 @@ class UserServiceTest {
     @Test
     void FailToSignUp_IfLoginIdIsDuplicated() {
         //Given
-        given(userRepository.existsByLoginId(userDto.getLoginId())).willReturn(true);
+        given(userCacheRepository.existsByLoginId(userDto.getLoginId())).willReturn(true);
 
         //When & Then
         assertThatThrownBy(() -> userService.signUp(userDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.DUPLICATE_ID.getMessage());
-        verify(userRepository).existsByLoginId(userDto.getLoginId());
+
+        verify(userCacheRepository).existsByLoginId(userDto.getLoginId());
     }
 
     @DisplayName("닉네임이 중복되면 회원가입 실패")
     @Test
     void FailToSignUp_IfNicknameIsDuplicated() {
         //Given
-        given(userRepository.existsByLoginId(userDto.getLoginId())).willReturn(false);
+        given(userCacheRepository.existsByLoginId(userDto.getLoginId())).willReturn(false);
         given(userRepository.existsByNickname(userDto.getNickname())).willReturn(true);
 
         //When & Then
         assertThatThrownBy(() -> userService.signUp(userDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.DUPLICATE_NICKNAME.getMessage());
-        verify(userRepository).existsByLoginId(userDto.getLoginId());
+
+        verify(userCacheRepository).existsByLoginId(userDto.getLoginId());
         verify(userRepository).existsByNickname(userDto.getNickname());
     }
 
@@ -131,14 +139,15 @@ class UserServiceTest {
                 .nickname(user.getNickname())
                 .build();
 
-        given(userRepository.existsByLoginId(userDto.getLoginId())).willReturn(false);
+        given(userCacheRepository.existsByLoginId(userDto.getLoginId())).willReturn(false);
         given(userRepository.existsByNickname(userDto.getNickname())).willReturn(false);
 
         //When & Then
         assertThatThrownBy(() -> userService.signUp(userDto))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.PASSWORD_CONFIRM_MISMATCH.getMessage());
-        verify(userRepository).existsByLoginId(userDto.getLoginId());
+
+        verify(userCacheRepository).existsByLoginId(userDto.getLoginId());
         verify(userRepository).existsByNickname(userDto.getNickname());
     }
 
@@ -148,13 +157,15 @@ class UserServiceTest {
         //Given
         String loginId = "user";
 
-        given(userRepository.existsByLoginId(loginId)).willReturn(false);
+        given(userCacheRepository.existsByLoginId(loginId)).willReturn(false);
 
         //When
         boolean result = userService.isLoginIdExist(loginId);
 
         //Then
         assertThat(result).isFalse();
+        verify(userCacheRepository).existsByLoginId(loginId);
+
     }
 
     @DisplayName("닉네임 중복 체크 성공")
@@ -176,7 +187,7 @@ class UserServiceTest {
     @Test
     void searchUser_ifLoginIdExists() {
         //Given
-        given(userRepository.findByLoginId(userDto.getLoginId())).willReturn(Optional.of(user));
+        given(userCacheRepository.findByLoginId(userDto.getLoginId())).willReturn(Optional.of(user));
 
         //When
         Optional<CustomUserDetails> result = userService.searchUser(userDto.getLoginId());
@@ -185,14 +196,14 @@ class UserServiceTest {
         assertThat(result).isNotEmpty();
         assertThat(result.get().getUsername()).isEqualTo(userDto.getLoginId());
 
-        then(userRepository).should().findByLoginId(userDto.getLoginId());
+        then(userCacheRepository).should().findByLoginId(userDto.getLoginId());
     }
 
     @DisplayName("아이디가 존재하지 않으면 유저 검색 실패")
     @Test
     void failToSearchUser_ifLoginIdDoesntExist() {
         //Given
-        given(userRepository.findByLoginId(userDto.getLoginId())).willReturn(Optional.empty());
+        given(userCacheRepository.findByLoginId(userDto.getLoginId())).willReturn(Optional.empty());
 
         //When
         Optional<CustomUserDetails> result = userService.searchUser(userDto.getLoginId());
@@ -200,7 +211,7 @@ class UserServiceTest {
         //Then
         assertThat(result).isEmpty();
 
-        then(userRepository).should().findByLoginId(userDto.getLoginId());
+        then(userCacheRepository).should().findByLoginId(userDto.getLoginId());
     }
 
     @DisplayName("아이디가 존재하면 내 정보 조회 성공")
@@ -210,7 +221,7 @@ class UserServiceTest {
         String loginId = userDto.getLoginId();
         int statisticsValue = 1;
 
-        given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+        given(userCacheRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
         given(followRepository.countByFollower_LoginId(loginId)).willReturn(statisticsValue);
         given(followRepository.countByFollowee_LoginId(loginId)).willReturn(statisticsValue);
         given(postRepository.countByUser_LoginId(loginId)).willReturn(statisticsValue);
@@ -227,7 +238,7 @@ class UserServiceTest {
         assertThat(result.getInfo().getModifiedAt()).isEqualTo(user.getModifiedAt());
         assertThat(result.getStatistics().getFollowingCount()).isEqualTo(statisticsValue);
 
-        then(userRepository).should().findByLoginId(loginId);
+        then(userCacheRepository).should().findByLoginId(loginId);
         then(followRepository).should().countByFollower_LoginId(loginId);
         then(followRepository).should().countByFollowee_LoginId(loginId);
         then(postRepository).should().countByUser_LoginId(loginId);
@@ -239,14 +250,14 @@ class UserServiceTest {
         //Given
         String loginId = userDto.getLoginId();
 
-        given(userRepository.findByLoginId(loginId)).willReturn(Optional.empty());
+        given(userCacheRepository.findByLoginId(loginId)).willReturn(Optional.empty());
 
         //When & Then
         assertThatThrownBy(() -> userService.getMyInfo(loginId))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
 
-        then(userRepository).should().findByLoginId(loginId);
+        then(userCacheRepository).should().findByLoginId(loginId);
         then(followRepository).shouldHaveNoInteractions();
         then(postRepository).shouldHaveNoInteractions();
     }
@@ -258,7 +269,7 @@ class UserServiceTest {
         String loginId = userDto.getLoginId();
         int statisticsValue = 1;
 
-        given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+        given(userCacheRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
         given(followRepository.countByFollower_LoginId(loginId)).willReturn(statisticsValue);
         given(followRepository.countByFollowee_LoginId(loginId)).willReturn(statisticsValue);
         given(postRepository.countByUser_LoginId(loginId)).willReturn(statisticsValue);
@@ -276,7 +287,7 @@ class UserServiceTest {
         assertThat(result.getInfo().getDeletedAt()).isNull();
         assertThat(result.getStatistics().getFollowingCount()).isEqualTo(statisticsValue);
 
-        then(userRepository).should().findByLoginId(loginId);
+        then(userCacheRepository).should().findByLoginId(loginId);
         then(followRepository).should().countByFollower_LoginId(loginId);
         then(followRepository).should().countByFollowee_LoginId(loginId);
         then(postRepository).should().countByUser_LoginId(loginId);
@@ -288,14 +299,14 @@ class UserServiceTest {
         //Given
         String loginId = userDto.getLoginId();
 
-        given(userRepository.findByLoginId(loginId)).willReturn(Optional.empty());
+        given(userCacheRepository.findByLoginId(loginId)).willReturn(Optional.empty());
 
         //When & Then
         assertThatThrownBy(() -> userService.getUserInfo(loginId))
                 .isInstanceOf(CustomException.class)
                 .hasMessage(ErrorCode.USER_NOT_FOUND.getMessage());
 
-        then(userRepository).should().findByLoginId(loginId);
+        then(userCacheRepository).should().findByLoginId(loginId);
         then(followRepository).shouldHaveNoInteractions();
         then(postRepository).shouldHaveNoInteractions();
     }
@@ -310,8 +321,9 @@ class UserServiceTest {
                 .build();
 
         given(userRepository.existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId)).willReturn(false);
-        given(userRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
+        given(userCacheRepository.findByLoginId(loginId)).willReturn(Optional.of(user));
         willDoNothing().given(userRepository).flush();
+        willDoNothing().given(userCacheRepository).modify(user);
 
         //When
         UserInfoResponse result = userService.modifyMyInfo(loginId, userDto);
@@ -321,8 +333,9 @@ class UserServiceTest {
         assertThat(result.getNickname()).isEqualTo(userDto.getNickname());
 
         then(userRepository).should().existsByNicknameAndLoginIdIsNot(userDto.getNickname(), loginId);
-        then(userRepository).should().findByLoginId(loginId);
+        then(userCacheRepository).should().findByLoginId(loginId);
         then(userRepository).should().flush();
+        then(userCacheRepository).should().modify(user);
     }
 
     @DisplayName("닉네임 수정 시 다른 유저의 닉네임과 중복되면 예외 발생")
@@ -355,7 +368,7 @@ class UserServiceTest {
         String encodedPassword = "encodedpwd12";
         User user = User.of("user1", userPassword, "nickname", null, Role.USER);
 
-        given(userRepository.findByLoginId(user.getLoginId())).willReturn(Optional.of(user));
+        given(userCacheRepository.findByLoginId(user.getLoginId())).willReturn(Optional.of(user));
         given(encoder.matches(currentPassword, userPassword)).willReturn(true);
         given(encoder.encode(newPassword)).willReturn(encodedPassword);
 
@@ -365,7 +378,7 @@ class UserServiceTest {
         //Then
         assertThat(user).hasFieldOrPropertyWithValue("password", encodedPassword);
 
-        then(userRepository).should().findByLoginId(user.getLoginId());
+        then(userCacheRepository).should().findByLoginId(user.getLoginId());
         then(encoder).should().matches(currentPassword, userPassword);
         then(encoder).should().encode(newPassword);
     }
@@ -395,7 +408,7 @@ class UserServiceTest {
         String newPassword = "newpwd12";
         User user = User.of(loginId, "current12", "nickname", null, Role.USER);
 
-        given(userRepository.findByLoginId(user.getLoginId())).willReturn(Optional.of(user));
+        given(userCacheRepository.findByLoginId(user.getLoginId())).willReturn(Optional.of(user));
         given(encoder.matches(currentPassword, user.getPassword())).willReturn(false);
 
         //When & Then
@@ -405,7 +418,7 @@ class UserServiceTest {
 
         assertThat(user).hasFieldOrPropertyWithValue("password", user.getPassword());
 
-        then(userRepository).should().findByLoginId(user.getLoginId());
+        then(userCacheRepository).should().findByLoginId(user.getLoginId());
         then(encoder).should().matches(currentPassword, user.getPassword());
     }
 
@@ -413,18 +426,22 @@ class UserServiceTest {
     @Test
     void setDeletionDate_WhenDeletingUser() {
         //Given
-        when(userRepository.findByLoginId(user.getLoginId())).thenReturn(Optional.of(user));
+        String loginId = user.getLoginId();
+
+        when(userCacheRepository.findByLoginId(loginId)).thenReturn(Optional.of(user));
         willDoNothing().given(userRepository).flush();
+        willDoNothing().given(userCacheRepository).deleteByLoginId(loginId);
 
         //When
-        UserInfoResponse result = userService.deleteUser(user.getLoginId());
+        UserInfoResponse result = userService.deleteUser(loginId);
 
         //Then
         assertThat(result).isNotNull();
         assertThat(result.getNickname()).isEqualTo(userDto.getNickname());
         assertThat(result.getDeletedAt()).isNotNull();
 
-        then(userRepository).should().findByLoginId(user.getLoginId());
+        then(userCacheRepository).should().findByLoginId(loginId);
         then(userRepository).should().flush();
+        then(userCacheRepository).should().deleteByLoginId(loginId);
     }
 }

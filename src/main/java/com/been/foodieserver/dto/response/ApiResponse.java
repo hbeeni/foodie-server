@@ -1,5 +1,6 @@
 package com.been.foodieserver.dto.response;
 
+import com.been.foodieserver.dto.PageDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -40,6 +41,10 @@ public class ApiResponse<T> {
         return new ApiResponse<>(STATUS_SUCCESS, null, data);
     }
 
+    public static <T> ApiResponse<List<T>> success(PageDto<T> pageDto) {
+        return new ApiResponse<>(STATUS_SUCCESS, null, pageDto.getContent(), Pagination.of(pageDto));
+    }
+
     public static <T> ApiResponse<List<T>> success(Page<T> page) {
         return new ApiResponse<>(STATUS_SUCCESS, null, page.getContent(), Pagination.of(page));
     }
@@ -73,6 +78,10 @@ public class ApiResponse<T> {
 
         public static Pagination of(Page<?> page) {
             return new Pagination(page.getNumber() + 1, page.getTotalPages(), page.getTotalElements(), page.getSize(), page.hasPrevious(), page.hasNext());
+        }
+
+        public static Pagination of(PageDto<?> page) {
+            return new Pagination(page.getCurrentPage(), page.getTotalPages(), page.getTotalElements(), page.getPageSize(), page.getHasPrevious(), page.getHasNext());
         }
     }
 }

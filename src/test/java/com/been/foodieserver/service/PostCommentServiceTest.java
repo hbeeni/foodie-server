@@ -14,6 +14,7 @@ import com.been.foodieserver.fixture.UserFixture;
 import com.been.foodieserver.producer.NotificationProducer;
 import com.been.foodieserver.repository.CommentRepository;
 import com.been.foodieserver.repository.PostRepository;
+import com.been.foodieserver.repository.cache.CommentCacheRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,9 @@ class PostCommentServiceTest {
 
     @Mock
     private CommentRepository commentRepository;
+
+    @Mock
+    private CommentCacheRepository commentCacheRepository;
 
     @Mock
     private NotificationProducer notificationProducer;
@@ -127,6 +131,7 @@ class PostCommentServiceTest {
         given(postRepository.findWithUserAndCategoryById(post.getId())).willReturn(Optional.of(post));
         given(userService.getUserOrException(user.getLoginId())).willReturn(user);
         given(commentRepository.save(any(Comment.class))).willReturn(comment);
+        willDoNothing().given(commentCacheRepository).saveId(any(Comment.class));
         willDoNothing().given(notificationProducer).send(any(NotificationEventDto.class));
 
         //When
@@ -142,6 +147,7 @@ class PostCommentServiceTest {
         then(postRepository).should().findWithUserAndCategoryById(post.getId());
         then(userService).should().getUserOrException(user.getLoginId());
         then(commentRepository).should().save(any(Comment.class));
+        then(commentCacheRepository).should().saveId(any(Comment.class));
         then(notificationProducer).should().send(any(NotificationEventDto.class));
     }
 
@@ -235,16 +241,21 @@ class PostCommentServiceTest {
     @Test
     void deleteComment_IfRequestIsValid() {
         //Given
-        given(postRepository.existsById(post.getId())).willReturn(true);
-        given(commentRepository.deleteByIdAndPostIdAndUserLoginId(comment.getId(), post.getId(), user.getLoginId()))
+        Long postId = post.getId();
+        Long commentId = comment.getId();
+
+        given(postRepository.existsById(postId)).willReturn(true);
+        given(commentRepository.deleteByIdAndPostIdAndUserLoginId(commentId, postId, user.getLoginId()))
                 .willReturn(1);
+        willDoNothing().given(commentCacheRepository).deleteByPostIdAndId(postId, commentId);
 
         //When
-        postCommentService.deleteComment(user.getLoginId(), post.getId(), comment.getId());
+        postCommentService.deleteComment(user.getLoginId(), postId, commentId);
 
         //Then
-        then(postRepository).should().existsById(post.getId());
-        then(commentRepository).should().deleteByIdAndPostIdAndUserLoginId(comment.getId(), post.getId(), user.getLoginId());
+        then(postRepository).should().existsById(postId);
+        then(commentRepository).should().deleteByIdAndPostIdAndUserLoginId(commentId, postId, user.getLoginId());
+        then(commentCacheRepository).should().deleteByPostIdAndId(postId, commentId);
         then(userService).shouldHaveNoInteractions();
     }
 
@@ -287,6 +298,7 @@ class PostCommentServiceTest {
 
         then(postRepository).should().existsById(post.getId());
         then(commentRepository).should().deleteByIdAndPostIdAndUserLoginId(comment.getId(), post.getId(), user.getLoginId());
+        then(commentCacheRepository).shouldHaveNoInteractions();
         then(userService).shouldHaveNoInteractions();
     }
 }
