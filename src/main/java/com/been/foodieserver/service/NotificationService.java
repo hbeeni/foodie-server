@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 @Service
 public class NotificationService {
 
