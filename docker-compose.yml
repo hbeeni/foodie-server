@@ -23,17 +23,25 @@ services:
       - REDIS_PORT=${REDIS_PORT}
     ports:
       - "80:8080"
+    networks:
+      - redis
+      - kafka
+      - monitoring
     restart: on-failure
   redis:
     container_name: redis
     image: redis:7
     ports:
       - "6379:6379"
+    networks:
+      - redis
   zookeeper:
     container_name: zookeeper
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
+    networks:
+      - kafka
     restart: on-failure
   kafka:
     container_name: kafka
@@ -50,6 +58,8 @@ services:
       KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+    networks:
+      - kafka
     restart: on-failure
   prometheus:
     container_name: prometheus
@@ -62,6 +72,8 @@ services:
       - "9090:9090"
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - monitoring
     restart: always
   grafana:
     container_name: grafana
@@ -71,4 +83,29 @@ services:
       - "3000:3000"
     volumes:
       - ./monitoring/grafana/volume:/var/lib/grafana
+    networks:
+      - monitoring
     restart: always
+  node-exporter:
+    image: prom/node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
+  redis-exporter:
+    image: oliver006/redis_exporter
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: "local-redis:6379"
+      REDIS_USER: null
+    networks:
+      - monitoring
+      - redis
+networks:
+  redis:
+    driver: bridge
+  kafka:
+    driver: bridge
+  monitoring:
+    driver: bridge

@@ -21,7 +21,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("select p from Post p " +
             "join fetch p.user " +
             "join fetch p.category")
-    Page<Post> findAllWithUserAndCategory(Pageable pageable);
+    List<Post> findAllWithUserAndCategory();
 
     @EntityGraph(attributePaths = {"user", "category"})
     Page<Post> findAllWithUserAndCategoryByIdIn(Pageable pageable, List<Long> postIds);

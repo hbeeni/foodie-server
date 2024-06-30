@@ -1,0 +1,58 @@
+server:
+  tomcat:
+    mbeanregistry:
+      enabled: true
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  endpoints:
+    web:
+      base-path: /manage
+      exposure:
+        include: prometheus
+  server:
+    port: 8081
+api:
+  endpoint:
+    base-url: /api/v1
+schedules:
+  cron:
+    user:
+      delete: 0 0 12 * * *
+    post:
+      delete: 0 30 12 * * *
+images:
+  dir:
+    user-profile: ${USER_PROFILE_IMAGE_DIR}
+slack:
+  token: ${SLACK_TOKEN}
+spring:
+  application.name: foodie-server
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        default_batch_fetch_size: 50
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: ${LOCAL_DB_URL}
+    username: ${LOCAL_DB_USERNAME}
+    password: ${LOCAL_DB_PASSWORD}
+  kafka:
+    properties:
+      spring.json.trusted.packages: com.been.foodieserver.dto,com.been.foodieserver.domain
+    bootstrap-servers: localhost:9092
+    consumer:
+      auto-offset-reset: latest
+      key-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    listener:
+      ack-mode: manual
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.LongSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    topic:
+      notification: notification
+      slack: slack
+      post: post.created
