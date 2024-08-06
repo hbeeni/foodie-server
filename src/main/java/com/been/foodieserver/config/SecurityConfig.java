@@ -26,7 +26,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private static final String[] WHITE_LIST = {
-            "/api/*/users/sign-up", "/api/*/users/login", "/api/*/users/id/exists", "/api/*/users/nickname/exists", "/manage/**", "/swagger-ui/**", "/api-docs/**"
+            "/api/*/users/sign-up", "/api/*/users/login", "/api/*/users/id/exists", "/api/*/users/nickname/exists", "/manage/**"
     };
 
     private final JwtTokenProvider jwtTokenProvider;
