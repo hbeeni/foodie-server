@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,6 +29,12 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private final SlackProducer slackProducer;
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResponse<Map<String, String>>> handleBadCredentialsException(AuthenticationException ex) {
+        return ResponseEntity.status(ErrorCode.AUTH_FAIL.getStatus())
+                .body(ApiResponse.error(ErrorCode.AUTH_FAIL.getMessage()));
+    }
 
     @ExceptionHandler({ConstraintViolationException.class, TypeMismatchException.class, HttpMessageConversionException.class})
     public ResponseEntity<ApiResponse<Void>> handleWebException(Exception ex) {

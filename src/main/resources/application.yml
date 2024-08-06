@@ -31,3 +31,6 @@ images:
     user-profile: ${USER_PROFILE_IMAGE_DIR}
 slack:
   token: ${SLACK_TOKEN}
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-time: 3600000 # 1000 * 60 * 60, 60분

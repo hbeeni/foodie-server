@@ -1,21 +1,17 @@
 api:
   endpoint:
     base-url: /api/v1
-
 schedules:
   cron:
     user:
       delete: 0/2 * * * * *
     post:
       delete: 0/2 * * * * *
-
 images:
   dir:
     user-profile: path
-
 slack:
   token: token
-
 spring:
   jpa:
     show-sql: true
@@ -36,3 +32,6 @@ spring:
       notification: notification
       slack: slack
       post: post.created
+jwt:
+  secret: uDqlrJE9zjEqpt22xvoQ3eS9UOiF5kCCa2FyaW10b2thcmltdG9rYXJpbXRva2FyaW10b2thcmltdG9rYXJpbXRva2FyaW10b2thcmltdG9rYXJpbXRva2FyaW10b2thcmltdG9rYXJpbXRva2FyaW10b2thcmltdG9rYXJpbXRva2FyaW10b2thcmltdG9rYXJp
+  expiration-time: 3600000

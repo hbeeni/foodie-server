@@ -2,7 +2,6 @@ package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
-import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.SlackEventDto;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.dto.response.UserInfoResponse;
@@ -181,37 +180,6 @@ class UserServiceTest {
 
         //Then
         assertThat(result).isFalse();
-    }
-
-    @DisplayName("아이디가 존재하면 유저 검색 성공")
-    @Test
-    void searchUser_ifLoginIdExists() {
-        //Given
-        given(userCacheRepository.findByLoginId(userDto.getLoginId())).willReturn(Optional.of(user));
-
-        //When
-        Optional<CustomUserDetails> result = userService.searchUser(userDto.getLoginId());
-
-        //Then
-        assertThat(result).isNotEmpty();
-        assertThat(result.get().getUsername()).isEqualTo(userDto.getLoginId());
-
-        then(userCacheRepository).should().findByLoginId(userDto.getLoginId());
-    }
-
-    @DisplayName("아이디가 존재하지 않으면 유저 검색 실패")
-    @Test
-    void failToSearchUser_ifLoginIdDoesntExist() {
-        //Given
-        given(userCacheRepository.findByLoginId(userDto.getLoginId())).willReturn(Optional.empty());
-
-        //When
-        Optional<CustomUserDetails> result = userService.searchUser(userDto.getLoginId());
-
-        //Then
-        assertThat(result).isEmpty();
-
-        then(userCacheRepository).should().findByLoginId(userDto.getLoginId());
     }
 
     @DisplayName("아이디가 존재하면 내 정보 조회 성공")
