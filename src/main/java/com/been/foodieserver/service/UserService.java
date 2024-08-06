@@ -1,7 +1,6 @@
 package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.User;
-import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.SlackEventDto;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.dto.response.UserInfoResponse;
@@ -27,7 +26,6 @@ import org.springframework.util.StringUtils;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static com.been.foodieserver.service.SlackService.SlackChannel;
 
@@ -74,12 +72,6 @@ public class UserService {
     @Transactional(readOnly = true)
     public boolean isNicknameExist(String nickname) {
         return userRepository.existsByNickname(nickname);
-    }
-
-
-    @Transactional(readOnly = true)
-    public Optional<CustomUserDetails> searchUser(String loginId) {
-        return userCacheRepository.findByLoginId(loginId).map(CustomUserDetails::from);
     }
 
     @Transactional(readOnly = true)

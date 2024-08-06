@@ -1,21 +1,23 @@
 package com.been.foodieserver.controller;
 
 import com.been.foodieserver.dto.request.UserInfoModifyRequest;
+import com.been.foodieserver.dto.request.UserLoginRequest;
 import com.been.foodieserver.dto.request.UserPasswordChangeRequest;
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.dto.response.UserInfoResponse;
 import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse;
 import com.been.foodieserver.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
+import com.been.foodieserver.utils.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,18 +28,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RequiredArgsConstructor
 @RequestMapping("${api.endpoint.base-url}/users")
 @RestController
 public class UserController {
 
     private final UserService userService;
-    private final SecurityContextLogoutHandler logoutHandler = new SecurityContextLogoutHandler();
+    private final JwtTokenProvider jwtTokenProvider;
+    private final AuthenticationManager authenticationManager;
 
     @PostMapping("/sign-up")
     public ResponseEntity<ApiResponse<Void>> signUp(@RequestBody @Valid UserSignUpRequest request) {
         userService.signUp(request.toDto());
         return ResponseEntity.ok(ApiResponse.success());
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<Map<String, String>>> loginUser(@RequestBody @Valid UserLoginRequest request, HttpServletResponse response) {
+        String jwt = createJwtToken(request.getLoginId(), request.getPassword(), response);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("token", jwt)));
     }
 
     @GetMapping("/id/exists")
@@ -66,22 +77,23 @@ public class UserController {
     }
 
     @PutMapping("/my/password")
-    public ResponseEntity<ApiResponse<Void>> changePassword(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
-                                                            @AuthenticationPrincipal UserDetails userDetails, @RequestBody @Valid UserPasswordChangeRequest request) {
+    public ResponseEntity<ApiResponse<Void>> changePassword(@AuthenticationPrincipal UserDetails userDetails, @RequestBody @Valid UserPasswordChangeRequest request) {
         userService.changePassword(userDetails.getUsername(), request.getCurrentPassword(), request.getNewPassword(), request.getConfirmNewPassword());
-        forceLogout(servletRequest, servletResponse);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
     @DeleteMapping("/my")
-    public ResponseEntity<ApiResponse<UserInfoResponse>> deleteUser(HttpServletRequest servletRequest, HttpServletResponse servletResponse,
-                                                                    @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<ApiResponse<UserInfoResponse>> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
         UserInfoResponse response = userService.deleteUser(userDetails.getUsername());
-        forceLogout(servletRequest, servletResponse);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    private void forceLogout(HttpServletRequest servletRequest, HttpServletResponse servletResponse) {
-        logoutHandler.logout(servletRequest, servletResponse, SecurityContextHolder.getContext().getAuthentication());
+    private String createJwtToken(String loginId, String password, HttpServletResponse response) {
+        Authentication authenticationRequest = UsernamePasswordAuthenticationToken.unauthenticated(loginId, password);
+        Authentication authentication = authenticationManager.authenticate(authenticationRequest);
+        String jwt = jwtTokenProvider.createToken(authentication);
+        response.addHeader("Authorization", "Bearer " + jwt);
+
+        return jwt;
     }
 }

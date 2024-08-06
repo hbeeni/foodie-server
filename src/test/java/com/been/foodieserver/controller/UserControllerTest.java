@@ -5,6 +5,7 @@ import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.CustomUserDetails;
 import com.been.foodieserver.dto.UserDto;
 import com.been.foodieserver.dto.request.UserInfoModifyRequest;
+import com.been.foodieserver.dto.request.UserLoginRequest;
 import com.been.foodieserver.dto.request.UserPasswordChangeRequest;
 import com.been.foodieserver.dto.request.UserSignUpRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
@@ -13,6 +14,8 @@ import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse;
 import com.been.foodieserver.dto.response.UserInfoWithStatisticsResponse.UserStatistics;
 import com.been.foodieserver.exception.CustomException;
 import com.been.foodieserver.exception.ErrorCode;
+import com.been.foodieserver.exception.JwtErrorCode;
+import com.been.foodieserver.service.CustomUserDetailsService;
 import com.been.foodieserver.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +34,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -60,11 +62,14 @@ class UserControllerTest {
     @MockBean
     private UserService userService;
 
-    @Autowired
-    private ObjectMapper mapper;
+    @MockBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @Autowired
     private PasswordEncoder encoder;
+
+    @Autowired
+    private ObjectMapper mapper;
 
     @Value("${api.endpoint.base-url}")
     private String baseUrl;
@@ -145,21 +150,23 @@ class UserControllerTest {
         String loginId = "loginid";
         String password = "password12";
 
+        UserLoginRequest request = new UserLoginRequest(loginId, password);
         User user = User.of(loginId, encoder.encode(password), null, null, Role.USER);
         CustomUserDetails customUserDetails = CustomUserDetails.from(user);
 
-        given(userService.searchUser(loginId)).willReturn(Optional.of(customUserDetails));
+        given(customUserDetailsService.loadUserByUsername(loginId)).willReturn(customUserDetails);
 
         //When & Then
         mockMvc.perform(post(userApi + "/login").with(csrf())
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .accept(MediaType.APPLICATION_FORM_URLENCODED)
-                        .param("loginId", loginId)
-                        .param("password", password))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS));
+                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS))
+                .andExpect(jsonPath("$.data.token").exists());
 
-        then(userService).should().searchUser(loginId);
+        then(customUserDetailsService).should().loadUserByUsername(loginId);
     }
 
     @DisplayName("회원가입하지 않은 아이디 또는 틀린 비밀번호로 로그인 시 로그인 실패")
@@ -169,30 +176,20 @@ class UserControllerTest {
         String loginId = "loginid";
         String password = "password12";
 
-        given(userService.searchUser(loginId)).willReturn(Optional.empty());
+        UserLoginRequest request = new UserLoginRequest(loginId, password);
+        given(customUserDetailsService.loadUserByUsername(loginId)).willReturn(null);
 
         //When & Then
         mockMvc.perform(post(userApi + "/login").with(csrf())
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .accept(MediaType.APPLICATION_FORM_URLENCODED)
-                        .param("loginId", loginId)
-                        .param("password", password))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .characterEncoding("UTF-8")
+                        .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_FAIL))
-                .andExpect(jsonPath("$.message").value(ErrorCode.USER_NOT_FOUND.getMessage()));
+                .andExpect(jsonPath("$.message").value(ErrorCode.AUTH_FAIL.getMessage()));
 
-        then(userService).should().searchUser(loginId);
-    }
-
-    @DisplayName("로그아웃 성공")
-    @Test
-    void logout() throws Exception {
-        //Given
-
-        //When & Then
-        mockMvc.perform(post(userApi + "/logout").with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_SUCCESS));
+        then(customUserDetailsService).should().loadUserByUsername(loginId);
     }
 
     @DisplayName("로그인이 되어 있으면 내 정보 조회 성공")
@@ -234,9 +231,9 @@ class UserControllerTest {
         mockMvc.perform(get(userApi + "/my")
                         .accept(MediaType.APPLICATION_JSON)
                         .characterEncoding("UTF-8"))
-                .andExpect(status().is(ErrorCode.AUTH_FAIL.getStatus().value()))
+                .andExpect(status().is(JwtErrorCode.NOT_FOUND_TOKEN.getStatus().value()))
                 .andExpect(jsonPath("$.status").value(ApiResponse.STATUS_FAIL))
-                .andExpect(jsonPath("$.message").value(ErrorCode.AUTH_FAIL.getMessage()));
+                .andExpect(jsonPath("$.message").value(JwtErrorCode.NOT_FOUND_TOKEN.getMessage()));
 
         then(userService).shouldHaveNoInteractions();
     }
