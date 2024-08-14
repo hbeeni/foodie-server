@@ -29,6 +29,10 @@ public class SecurityConfig {
             "/api/*/users/sign-up", "/api/*/users/login", "/api/*/users/id/exists", "/api/*/users/nickname/exists", "/manage/**"
     };
 
+    private static final String[] CHAT_WHITE_LIST = {
+            "/chat", "/pub/chat/message", "/sub/chat-rooms/**", "/api/*/chat-rooms/**"
+    };
+
     private final JwtTokenProvider jwtTokenProvider;
 
     @Bean
@@ -44,6 +48,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
                         .requestMatchers(WHITE_LIST).permitAll()
+                        .requestMatchers(CHAT_WHITE_LIST).permitAll()
                         .requestMatchers("/refresh/**").hasRole(Role.ADMIN.getRoleName())
                         .anyRequest().authenticated())
                 .exceptionHandling(config -> config
