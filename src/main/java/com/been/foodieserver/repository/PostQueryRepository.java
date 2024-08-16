@@ -61,10 +61,10 @@ public class PostQueryRepository {
     }
 
     private BooleanExpression writerLoginIdContainsIgnoreCase(String writerLoginId) {
-        return StringUtils.hasText(writerLoginId) ? user.loginId.containsIgnoreCase(writerLoginId) : null;
+        return StringUtils.hasText(writerLoginId) ? user.loginId.containsIgnoreCase(writerLoginId.trim()) : null;
     }
 
     private BooleanExpression postTitleContainsIgnoreCase(String title) {
-        return StringUtils.hasText(title) ? post.title.containsIgnoreCase(title) : null;
+        return StringUtils.hasText(title) ? post.title.containsIgnoreCase(title.trim()) : null;
     }
 }
