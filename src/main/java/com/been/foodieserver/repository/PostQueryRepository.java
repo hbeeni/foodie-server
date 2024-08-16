@@ -2,6 +2,7 @@ package com.been.foodieserver.repository;
 
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.dto.PostSearchDto;
+import com.been.foodieserver.repository.cache.PostSearchCacheRepository;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -25,8 +26,13 @@ import static com.been.foodieserver.domain.QUser.user;
 public class PostQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+    private final PostSearchCacheRepository postSearchCacheRepository;
 
     public Page<Post> findAllByUserLoginIdContainsIgnoreCaseAndTitleContainsIgnoreCase(PostSearchDto dto) {
+        if (dto.getTitle() != null) {
+            postSearchCacheRepository.incrementSearchKeywordCount(dto.getTitle());
+        }
+
         Pageable pageable = PageRequest.of(dto.getPageNum() - 1, dto.getPageSize(), Sort.by(Sort.Direction.DESC, "id"));
 
         List<Post> content = queryFactory
@@ -51,7 +57,6 @@ public class PostQueryRepository {
                         writerLoginIdContainsIgnoreCase(dto.getWriterLoginId()),
                         postTitleContainsIgnoreCase(dto.getTitle())
                 );
-
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 

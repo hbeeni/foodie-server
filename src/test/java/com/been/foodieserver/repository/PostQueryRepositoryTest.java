@@ -6,6 +6,7 @@ import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.domain.Role;
 import com.been.foodieserver.domain.User;
 import com.been.foodieserver.dto.PostSearchDto;
+import com.been.foodieserver.repository.cache.PostSearchCacheRepository;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
@@ -15,15 +16,20 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.mockito.BDDMockito.then;
 
 @Import({JpaConfig.class, PostQueryRepositoryTest.TestQueryDslConfig.class})
 @DataJpaTest
@@ -40,6 +46,9 @@ class PostQueryRepositoryTest {
 
     @Autowired
     private PostQueryRepository postQueryRepository;
+
+    @MockBean
+    private PostSearchCacheRepository postSearchCacheRepository;
 
     private static final String TITLE_1 = "Hello World";
     private static final String TITLE_2 = "hello w";
@@ -64,7 +73,7 @@ class PostQueryRepositoryTest {
         Category category = Category.of("category", null);
         categoryRepository.saveAndFlush(category);
 
-        Post post1 = Post.of(user1, category, "Hello World", "content");
+        Post post1 = Post.of(user1, category, TITLE_1, "content");
         Post post2 = Post.of(user1, category, TITLE_2, "content");
         Post post3 = Post.of(user1, category, TITLE_3, "content");
         Post post4 = Post.of(user1, category, TITLE_4, "content");
@@ -91,6 +100,11 @@ class PostQueryRepositoryTest {
 
         //Then
         assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
+        if (searchTitle == null) {
+            then(postSearchCacheRepository).shouldHaveNoInteractions();
+        } else {
+            then(postSearchCacheRepository).should().incrementSearchKeywordCount(searchTitle);
+        }
     }
 
     static Stream<Arguments> findPostPageByWriterIdAndTitleContaining() {
@@ -139,7 +153,24 @@ class PostQueryRepositoryTest {
 
         @Bean
         public PostQueryRepository postQueryRepository() {
-            return new PostQueryRepository(jpaQueryFactory());
+            return new PostQueryRepository(jpaQueryFactory(), postSearchCacheRepository());
+        }
+
+        @Bean
+        public PostSearchCacheRepository postSearchCacheRepository() {
+            return new PostSearchCacheRepository(redisTemplate());
+        }
+
+        @Bean
+        public RedisTemplate<String, String> redisTemplate() {
+            RedisTemplate<String, String> template = new RedisTemplate<>();
+            template.setConnectionFactory(redisConnectionFactory());
+            return template;
+        }
+
+        @Bean
+        public RedisConnectionFactory redisConnectionFactory() {
+            return new LettuceConnectionFactory();
         }
     }
 }
