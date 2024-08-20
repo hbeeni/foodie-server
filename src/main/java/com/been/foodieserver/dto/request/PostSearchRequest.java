@@ -1,6 +1,9 @@
 package com.been.foodieserver.dto.request;
 
 import com.been.foodieserver.dto.PostSearchDto;
+import com.been.foodieserver.dto.PostSearchType;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,9 +14,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PostSearchRequest {
 
-    private String writerLoginId;
+    @NotNull
+    private PostSearchType searchType;
 
-    private String title;
+    @NotBlank
+    private String keyword;
 
     @Positive
     private Integer pageNum = 1;
@@ -23,8 +28,8 @@ public class PostSearchRequest {
 
     public PostSearchDto toDto() {
         return PostSearchDto.builder()
-                .writerLoginId(writerLoginId)
-                .title(title)
+                .searchType(searchType)
+                .keyword(keyword)
                 .pageNum(pageNum)
                 .pageSize(pageSize)
                 .build();

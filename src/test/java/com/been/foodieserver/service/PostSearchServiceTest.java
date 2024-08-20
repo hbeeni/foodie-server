@@ -2,6 +2,7 @@ package com.been.foodieserver.service;
 
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.dto.PostSearchDto;
+import com.been.foodieserver.dto.PostSearchType;
 import com.been.foodieserver.dto.response.PostResponse;
 import com.been.foodieserver.fixture.PostFixture;
 import com.been.foodieserver.repository.PostQueryRepository;
@@ -36,10 +37,9 @@ class PostSearchServiceTest {
     void searchPost_IfRequestIsValid() {
         //Given
         String searchTitle = "searchTitle";
-        String searchLoginId = "writer";
 
-        Post post1 = PostFixture.get("title1", searchLoginId, "자유 게시판");
-        Post post2 = PostFixture.get("title2", searchLoginId, "자유 게시판");
+        Post post1 = PostFixture.get("title1", "writer", "자유 게시판");
+        Post post2 = PostFixture.get("title2", "writer", "자유 게시판");
 
         int pageNum = 1;
         int pageSize = 10;
@@ -49,13 +49,13 @@ class PostSearchServiceTest {
         Page<Post> postPage = new PageImpl<>(content, pageable, content.size());
 
         PostSearchDto dto = PostSearchDto.builder()
-                .writerLoginId(searchLoginId)
-                .title(searchTitle)
+                .searchType(PostSearchType.TITLE)
+                .keyword(searchTitle)
                 .pageNum(pageNum)
                 .pageSize(pageSize)
                 .build();
 
-        given(postQueryRepository.findAllByUserLoginIdContainsIgnoreCaseAndTitleContainsIgnoreCase(dto)).willReturn(postPage);
+        given(postQueryRepository.findAllByTitleContainsIgnoreCase(dto)).willReturn(postPage);
 
         //When
         Page<PostResponse> result = postSearchService.search(dto);
@@ -67,6 +67,6 @@ class PostSearchServiceTest {
         assertThat(result.getSize()).isEqualTo(pageSize);
         assertThat(result.getContent().get(0).getTitle()).isEqualTo(post2.getTitle());
 
-        then(postQueryRepository).should().findAllByUserLoginIdContainsIgnoreCaseAndTitleContainsIgnoreCase(dto);
+        then(postQueryRepository).should().findAllByTitleContainsIgnoreCase(dto);
     }
 }
