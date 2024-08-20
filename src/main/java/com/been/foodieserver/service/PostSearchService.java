@@ -21,7 +21,10 @@ public class PostSearchService {
 
     @Transactional(readOnly = true)
     public Page<PostResponse> search(PostSearchDto dto) {
-        return postQueryRepository.findAllByUserLoginIdContainsIgnoreCaseAndTitleContainsIgnoreCase(dto).map(PostResponse::of);
+        return switch (dto.getSearchType()) {
+            case WRITER_NICKNAME -> postQueryRepository.findAllByUserNicknameContainsIgnoreCase(dto).map(PostResponse::of);
+            case TITLE -> postQueryRepository.findAllByTitleContainsIgnoreCase(dto).map(PostResponse::of);
+        };
     }
 
     @Transactional(readOnly = true)

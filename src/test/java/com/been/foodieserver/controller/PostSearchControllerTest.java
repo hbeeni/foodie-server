@@ -2,6 +2,7 @@ package com.been.foodieserver.controller;
 
 import com.been.foodieserver.domain.Post;
 import com.been.foodieserver.dto.PostSearchDto;
+import com.been.foodieserver.dto.PostSearchType;
 import com.been.foodieserver.dto.request.PostSearchRequest;
 import com.been.foodieserver.dto.response.ApiResponse;
 import com.been.foodieserver.dto.response.PostResponse;
@@ -56,7 +57,7 @@ class PostSearchControllerTest {
         int pageNum = 1;
         int pageSize = 10;
 
-        PostSearchRequest request = new PostSearchRequest("writer", "title", pageNum, pageSize);
+        PostSearchRequest request = new PostSearchRequest(PostSearchType.TITLE, "title", pageNum, pageSize);
 
         Post post1 = PostFixture.get("title1", "writer", "자유 게시판");
         Post post2 = PostFixture.get("title2", "writer", "자유 게시판");

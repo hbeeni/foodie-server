@@ -28,21 +28,18 @@ public class PostQueryRepository {
     private final JPAQueryFactory queryFactory;
     private final PostSearchCacheRepository postSearchCacheRepository;
 
-    public Page<Post> findAllByUserLoginIdContainsIgnoreCaseAndTitleContainsIgnoreCase(PostSearchDto dto) {
-        if (dto.getTitle() != null) {
-            postSearchCacheRepository.incrementSearchKeywordCount(dto.getTitle());
+    public Page<Post> findAllByUserNicknameContainsIgnoreCase(PostSearchDto dto) {
+        if (dto.getKeyword() == null || dto.getKeyword().isBlank()) {
+            return Page.empty();
         }
 
-        Pageable pageable = PageRequest.of(dto.getPageNum() - 1, dto.getPageSize(), Sort.by(Sort.Direction.DESC, "id"));
+        Pageable pageable = getPageable(dto);
 
         List<Post> content = queryFactory
                 .selectFrom(post)
                 .join(post.category, category).fetchJoin()
                 .join(post.user, user).fetchJoin()
-                .where(
-                        writerLoginIdContainsIgnoreCase(dto.getWriterLoginId()),
-                        postTitleContainsIgnoreCase(dto.getTitle())
-                )
+                .where(writerNicknameContainsIgnoreCase(dto.getKeyword()))
                 .orderBy(post.id.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -53,18 +50,48 @@ public class PostQueryRepository {
                 .from(post)
                 .leftJoin(post.category, category)
                 .leftJoin(post.user, user)
-                .where(
-                        writerLoginIdContainsIgnoreCase(dto.getWriterLoginId()),
-                        postTitleContainsIgnoreCase(dto.getTitle())
-                );
+                .where(writerNicknameContainsIgnoreCase(dto.getKeyword()));
+
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    private BooleanExpression writerLoginIdContainsIgnoreCase(String writerLoginId) {
-        return StringUtils.hasText(writerLoginId) ? user.loginId.containsIgnoreCase(writerLoginId.trim()) : null;
+    public Page<Post> findAllByTitleContainsIgnoreCase(PostSearchDto dto) {
+        if (dto.getKeyword() == null || dto.getKeyword().isBlank()) {
+            return Page.empty();
+        }
+
+        postSearchCacheRepository.incrementSearchKeywordCount(dto.getKeyword());
+
+        Pageable pageable = getPageable(dto);
+
+        List<Post> content = queryFactory
+                .selectFrom(post)
+                .join(post.category, category).fetchJoin()
+                .join(post.user, user).fetchJoin()
+                .where(postTitleContainsIgnoreCase(dto.getKeyword()))
+                .orderBy(post.id.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(post.count())
+                .from(post)
+                .leftJoin(post.category, category)
+                .leftJoin(post.user, user)
+                .where(postTitleContainsIgnoreCase(dto.getKeyword()));
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanExpression writerNicknameContainsIgnoreCase(String nickname) {
+        return StringUtils.hasText(nickname) ? user.nickname.containsIgnoreCase(nickname.trim()) : null;
     }
 
     private BooleanExpression postTitleContainsIgnoreCase(String title) {
         return StringUtils.hasText(title) ? post.title.containsIgnoreCase(title.trim()) : null;
+    }
+
+    private static PageRequest getPageable(PostSearchDto dto) {
+        return PageRequest.of(dto.getPageNum() - 1, dto.getPageSize(), Sort.by(Sort.Direction.DESC, "id"));
     }
 }
