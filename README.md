@@ -2,13 +2,13 @@
 
 음식을 좋아하는 사람들이 음식에 관해 소통하는 SNS<br/>
 
-[<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://app.getpostman.com/run-collection/33257914-bc5771f6-782f-4ba7-9d86-e241a8c93390?action=collection%2Ffork&source=rip_markdown&collection-url=entityId%3D33257914-bc5771f6-782f-4ba7-9d86-e241a8c93390%26entityType%3Dcollection%26workspaceId%3Db20809e7-06eb-481b-9afa-325739d7827c)
+[<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://www.postman.com/cryosat-meteorologist-52159198/workspace/public/collection/33257914-bc5771f6-782f-4ba7-9d86-e241a8c93390?action=share&creator=33257914&active-environment=33257914-5bf8b830-9f27-4ffa-a219-2c563b411303)
 
 <br/>
 
 ## 1. 제작 기간 & 참여 인원
 
-- 2024년 5월 3일 ~ 2024년 7월 1일
+- 2024년 5월 3일 ~ 진행 중
 - 개인 프로젝트
 
 <br/>
@@ -27,6 +27,7 @@
 - Spring Data Redis
 - Spring Kafka
 - Spring Actuator / Prometheus / Grafana
+- WebSocket
 - Docker
 - Google Cloud Platform
 
@@ -69,6 +70,9 @@
 - 알림
   - 알림 구독
   - 알림 목록 조회
+- 채팅
+  - 채팅방 목록/상세 조회
+  - 채팅방 생성
 
 <br/>
 
@@ -295,12 +299,11 @@
 
 ### 6.1. 게시글 목록 조회 성능 개선
 
-- 게시글 목록 조회 기능은 Foodie의 핵심 기능입니다.
-- 유저 5만명, 게시글 100만개, 댓글 100만개가 존재하는 상황에서 500명의 유저가 접속 시 200TPS를 유지하는 것을 목표로 성능 테스트를 진행했습니다.
+- 게시글 목록 조회 기능은 Foodie의 핵심 기능이기 때문에 성능 테스트를 진행했습니다.
 - 테스트 환경: 로컬
   - CPU: 13th Gen Intel(R) Core(TM) i5-1340P (12 core, 16 thread)
   - Memory: 16GB
-- DB에서 게시글을 조회하던 기존 코드는 100명의 유저가 접속할 때도 요청이 대부분 실패해 성능 테스트의 의미가 없었습니다.
+- 기존 코드(DB에서 데이터 조회)는 100명의 유저만 접속해도 대부분의 요청이 실패해 성능 테스트의 의미가 없었습니다.
 
 ```java
 public Page<PostResponse> getPostList(int pageNum, int pageSize) {
@@ -313,7 +316,7 @@ public Page<PostResponse> getPostList(int pageNum, int pageSize) {
 
 #### 성능 개선 과정
 
-DB에 접근해 데이터를 가져오는 데 시간이 많이 걸린다고 판단해 Redis에 게시글을 저장해 조회 성능을 높이기로 하였습니다.
+DB에 접근해 데이터를 가져오는 데 시간이 많이 걸린다고 판단해 Redis에 게시글을 캐싱해 조회 성능을 높이기로 하였습니다.
 
 1. 게시글 작성 시 먼저 DB에 게시글을 저장한 후 Redis에 게시글을 저장하기 위한 이벤트를 Kafka로 발행합니다.
 
@@ -353,12 +356,10 @@ DB에 접근해 데이터를 가져오는 데 시간이 많이 걸린다고 판�
 
 #### 성능 개선 결과
 
-[결과 html 파일을 다운 받아서 확인할 수 있습니다.](./document/html/성능%20개선%20결과.html)
-
 <img src="./document/image/performance_test_result1.png">
 <img src="./document/image/performance_test_result2.png">
 
-성능 개선 후 목표하였던 200TPS 이상 나온 걸 확인할 수 있었습니다.
+유저 5만명, 게시글 100만개, 댓글 100만개가 존재하는 상황에서 500명의 유저가 접속 시 222.4 TPS를 달성함으로써 성능 개선에 성공했습니다.
 
 <br/>
 
