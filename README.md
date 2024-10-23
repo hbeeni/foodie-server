@@ -2,8 +2,6 @@
 
 음식을 좋아하는 사람들이 음식에 관해 소통하는 SNS<br/>
 
-[<img src="https://run.pstmn.io/button.svg" alt="Run In Postman" style="width: 128px; height: 32px;">](https://www.postman.com/cryosat-meteorologist-52159198/workspace/public/collection/33257914-bc5771f6-782f-4ba7-9d86-e241a8c93390?action=share&creator=33257914&active-environment=33257914-5bf8b830-9f27-4ffa-a219-2c563b411303)
-
 <br/>
 
 ## 1. 제작 기간 & 참여 인원
